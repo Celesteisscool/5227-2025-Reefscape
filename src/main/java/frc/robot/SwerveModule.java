@@ -28,7 +28,6 @@ public class SwerveModule {
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final PIDController m_drivePIDController = new PIDController(0, 0, 0);
-  
 
   // Desired state
   private SwerveModuleState m_desiredState;
@@ -155,4 +154,7 @@ public class SwerveModule {
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
     m_rotationMotor.setVoltage(rotateOutput + rotationFeedforward);
   }
+
+
+  
 }
