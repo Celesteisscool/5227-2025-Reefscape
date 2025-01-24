@@ -4,6 +4,7 @@
 
 package frc.robot;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -11,9 +12,10 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Robot extends TimedRobot {
   private final XboxController m_controller = new XboxController(0);
   private final Drivetrain m_swerve = new Drivetrain();
-
-
-
+  private SlewRateLimiter m_slewLimiterX = new SlewRateLimiter(0.5);
+  private SlewRateLimiter m_slewLimiterY = new SlewRateLimiter(0.5);
+  private SlewRateLimiter m_slewLimiterRot = new SlewRateLimiter(0.5);
+  
   @Override
   public void autonomousPeriodic() {
     driveWithJoystick(false);
@@ -22,12 +24,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void robotInit() {
-    m_swerve.initPID();
   }
 
   @Override 
   public void robotPeriodic() {
-    if (m_controller.getAButtonPressed()) {m_swerve.updatePID();}
   }
 
   @Override
@@ -41,21 +41,24 @@ public class Robot extends TimedRobot {
   private void driveWithJoystick(boolean fieldRelative) {
     // Get the x speed. We are inverting this because Xbox controllers return
     // negative values when we push forward.
+    var speedLimit = 1 - (m_controller.getRightTriggerAxis() * .5);
+
+
     var xSpeed =
-        (m_controller.getLeftY()* Drivetrain.kMaxSpeed);
+        (m_controller.getLeftY()* Drivetrain.kMaxSpeed * speedLimit);
 
     // Get the y speed or sideways/strafe speed. We are inverting this because
     // we want a positive value when we pull to the left. Xbox controllers
     // return positive values when you pull to the right by default.
     var ySpeed =
-        (m_controller.getLeftX() * Drivetrain.kMaxSpeed);
+        (m_controller.getLeftX() * Drivetrain.kMaxSpeed * speedLimit);
 
     // Get the rate of angular rotation. We are inverting this because we want a
     // positive value when we pull to the left (remember, CCW is positive in
     // mathematics). Xbox controllers return positive values when you pull to
     // the right by default.
-    var rot =
-        (m_controller.getRightX() * Drivetrain.kMaxAngularSpeed) * -1;
+    var rotSpeed =
+        (m_controller.getRightX() * Drivetrain.kMaxAngularSpeed * speedLimit) * -1;
 
     if (m_controller.getPOV() == 0) {
       xSpeed = 0.25;
@@ -67,11 +70,24 @@ public class Robot extends TimedRobot {
     } else if (m_controller.getPOV() == 270) {
       ySpeed = -0.25;
     }
+    
+    
 
-    m_swerve.drive(xSpeed, ySpeed, rot, fieldRelative, getPeriod());
+    m_swerve.drive(
+      m_slewLimiterX.calculate(xSpeed), 
+      m_slewLimiterY.calculate(ySpeed), 
+      m_slewLimiterRot.calculate(rotSpeed), 
+      fieldRelative, getPeriod()
+    );
   }
 
   @Override
   public void simulationPeriodic() {
+  }
+
+  public void testPeriodic() {
+    if (m_controller.getXButton()) {
+      m_swerve.setMotorVoltage(0.45);
+    }
   }
 }

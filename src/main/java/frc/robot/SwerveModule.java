@@ -24,22 +24,18 @@ public class SwerveModule {
   private final SparkMax m_driveMotor; 
   private final RelativeEncoder m_driveEncoder;
   private final SparkMax m_rotationMotor;
-  private final CANcoder m_rotationEncoder;
-
-  
-  
-  
-  
+  private final CANcoder m_rotationEncoder;  
 
   // Gains are for example purposes only - must be determined for your own robot!
   private final PIDController m_drivePIDController = new PIDController(0, 0, 0);
   
+
   // Desired state
   private SwerveModuleState m_desiredState;
   // Gains are for example purposes only - must be determined for your own robot!
   private final ProfiledPIDController m_rotationPIDController =
       new ProfiledPIDController(
-          6.75,
+          7.25,
           0,
           0,
           new TrapezoidProfile.Constraints(
@@ -47,7 +43,7 @@ public class SwerveModule {
               
               // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
-  private final SimpleMotorFeedforward m_rotationFeedforward = new SimpleMotorFeedforward(1, 4);
+  private final SimpleMotorFeedforward m_rotationFeedforward = new SimpleMotorFeedforward(0.45, 0); 
 
   /**
    * Constructs a SwerveModule with a drive motor, rotation motor, drive encoder and rotation encoder.
@@ -69,10 +65,9 @@ public class SwerveModule {
     // to be continuous.
     m_rotationPIDController.enableContinuousInput(-Math.PI, Math.PI);
 
+
     m_rotationEncoder.setPosition(0);
 
-    
-    
   }
 
   public double getDriveSpeedMetersPerSecond() {
@@ -119,6 +114,10 @@ public class SwerveModule {
 
   public void updatePID(double P, double I, double D) {
     m_rotationPIDController.setPID(P, I, D);
+  }
+
+  public void moveWithVoltage(double volts) {
+    m_rotationMotor.setVoltage(volts);
   }
 
   /**
