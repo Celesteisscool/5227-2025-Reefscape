@@ -5,8 +5,13 @@
 package frc.robot;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
-
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.commands.PathPlannerAuto;
+import com.pathplanner.lib.config.PIDConstants;
+import com.pathplanner.lib.config.RobotConfig;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -15,10 +20,13 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Represents a swerve drive style drivetrain. */
-public class Drivetrain {
+public class Drivetrain extends SubsystemBase {
   
   public static final double kMaxSpeed = 1; // 3 meters per second
   public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
@@ -34,9 +42,14 @@ public class Drivetrain {
   private final SwerveModule m_backRight = new SwerveModule(1,2,9);
 
     
-  private SlewRateLimiter m_slewLimiterX = new SlewRateLimiter(0.5);
-  private SlewRateLimiter m_slewLimiterY = new SlewRateLimiter(0.5);
-  private SlewRateLimiter m_slewLimiterRot = new SlewRateLimiter(0.5);
+  private SlewRateLimiter m_slewLimiterX = new SlewRateLimiter(2);
+  private SlewRateLimiter m_slewLimiterY = new SlewRateLimiter(2);
+  private SlewRateLimiter m_slewLimiterRot = new SlewRateLimiter(3);
+
+  private final PPHolonomicDriveController m_ppDriveController = new PPHolonomicDriveController(
+        new PIDConstants(5.0, 0.0, 0.0),
+        new PIDConstants(5.0, 0.0, 0.0)
+  );
 
   private final Pigeon2 m_gyro = new Pigeon2(32);
 
@@ -58,8 +71,66 @@ public class Drivetrain {
             m_backRight.getPosition()
           });
 
+
+  private Pose2d getPose() {
+    return m_odometry.getPoseMeters();
+  }
+
+  private void resetPose(Pose2d pose) {
+    m_odometry.resetPose(pose);
+  }
+
+  private ChassisSpeeds getRobotRelativeSpeeds() {
+    return m_kinematics.toChassisSpeeds(returnWheelStates());
+  }
+
+  private void driveRobotRelative(ChassisSpeeds speeds) {
+    m_kinematics.toSwerveModuleStates(speeds);
+  }
+
   public Drivetrain() {
     m_gyro.reset();
+    //RobotConfig config = new RobotConfig(
+    //  56.699,
+    //  5.486989026,
+    //  new ModuleConfig(0.1016, 3, 1.75, DCMotor.getNEO(4), 90, 4), 
+    //  new Translation2d(-0.538815367376, 0.538815367376), 
+    //  new Translation2d(0.538815367376, 0.538815367376), 
+    //  new Translation2d(-0.538815367376, -0.538815367376), 
+    //  new Translation2d(0.538815367376, -0.538815367376)
+
+    //  
+    //);
+    RobotConfig config = null;
+    try{
+      config = RobotConfig.fromGUISettings();
+    } catch (Exception e) {
+      // Handle exception as needed
+      e.addSuppressed(e);
+    }
+    
+    
+
+    AutoBuilder.configure(
+      this::getPose, 
+      this::resetPose, 
+      this::getRobotRelativeSpeeds, 
+      (speeds, feedforwards) -> driveRobotRelative(speeds), 
+      m_ppDriveController,
+      config, 
+      () -> {
+        var alliance = DriverStation.getAlliance();
+        if (alliance.isPresent()) {
+          return alliance.get() == DriverStation.Alliance.Red;
+        }
+        return false;
+      },
+      this // Reference to this subsystem to set requirements
+      );
+  }
+
+  public Command getAutonomousCommand() {
+    return new PathPlannerAuto("Example Auto");
   }
 
   /**
@@ -100,6 +171,15 @@ public class Drivetrain {
       m_backRight.getState()
   };
   Current.set(CurrentS);
+  }
+
+  private SwerveModuleState[] returnWheelStates() {
+    return new SwerveModuleState[] {
+      m_frontLeft.getState(),
+      m_frontRight.getState(),
+      m_backLeft.getState(),
+      m_backRight.getState()
+    };
   }
 
   /** Updates the field relative position of the robot. */

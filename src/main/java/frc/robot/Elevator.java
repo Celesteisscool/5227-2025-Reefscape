@@ -4,12 +4,11 @@ import com.revrobotics.spark.SparkMax;
 
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Elevator {
-    private SparkMax m_motor = new SparkMax(23, SparkMax.MotorType.kBrushless);
-    private PIDController m_leftPidController = new PIDController(0.1, 0, 0);
+    private SparkMax m_motor = new SparkMax(21, SparkMax.MotorType.kBrushless);
+    private PIDController m_leftPidController = new PIDController(3, 0, 0);
 
     private double kS = 0;
     private double kG = 0;
@@ -57,18 +56,21 @@ public class Elevator {
         if (XboxController.getAButton()) {
             setPreset1();
         }
-        if (XboxController.getBButton()) {
+        else if (XboxController.getBButton()) {
             setPreset2();
         }
-        if (XboxController.getXButton()) {
+        else if (XboxController.getXButton()) {
             moveElevatorPreset(1);
         }
-        if (XboxController.getYButton()) {
+        else if (XboxController.getYButton()) {
             moveElevatorPreset(2);
         }
 
-        if (XboxController.getLeftBumperButton()) {
+        else if (XboxController.getLeftBumperButton()) {
             moveElevatorManual(XboxController.getRightY());
+        }
+        else {
+            moveElevatorManual(0);
         }
     }
 }
