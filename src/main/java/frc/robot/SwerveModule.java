@@ -17,7 +17,7 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 public class SwerveModule {
-  private static final double kModuleMaxAngularVelocity = Drivetrain.kMaxAngularSpeed;
+  private static final double kModuleMaxAngularVelocity = Drivetrain.maxSwerveAngularSpeed;
   private static final double kModuleMaxAngularAcceleration =
   2 * Math.PI; // radians per second squared
   
@@ -40,7 +40,7 @@ public class SwerveModule {
           new TrapezoidProfile.Constraints(
               kModuleMaxAngularVelocity, kModuleMaxAngularAcceleration));
               
-              // Gains are for example purposes only - must be determined for your own robot!
+  // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward m_driveFeedforward = new SimpleMotorFeedforward(1, 3);
   private final SimpleMotorFeedforward m_rotationFeedforward = new SimpleMotorFeedforward(0.45, 0); 
 
@@ -64,9 +64,7 @@ public class SwerveModule {
     // to be continuous.
     m_rotationPIDController.enableContinuousInput(-Math.PI, Math.PI);
 
-
     m_rotationEncoder.setPosition(0);
-
   }
 
   public double getDriveSpeedMetersPerSecond() {
@@ -85,7 +83,6 @@ public class SwerveModule {
   public double getRotationEncoderPosition() {
     return (m_rotationEncoder.getPosition().getValueAsDouble() * (2 * Math.PI)); // Returns the angle in radians
   } 
-
 
   /**
    * Returns the current state of the module.
@@ -154,7 +151,4 @@ public class SwerveModule {
     m_driveMotor.setVoltage(driveOutput + driveFeedforward);
     m_rotationMotor.setVoltage(rotateOutput + rotationFeedforward);
   }
-
-
-  
 }

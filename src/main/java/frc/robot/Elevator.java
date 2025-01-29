@@ -1,76 +1,50 @@
 package frc.robot;
 
 import com.revrobotics.spark.SparkMax;
-
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Elevator {
-    private SparkMax m_motor = new SparkMax(21, SparkMax.MotorType.kBrushless);
-    private PIDController m_leftPidController = new PIDController(3, 0, 0);
+    private SparkMax elevatorMotor = new SparkMax(21, SparkMax.MotorType.kBrushless);
+    private PIDController elevatorPIDController = new PIDController(3, 0, 0);
 
-    private double kS = 0;
-    private double kG = 0;
-    private double kV = 0;
-    private double kA = 0;
-    private ElevatorFeedforward m_ElevatorFeedforward = new ElevatorFeedforward(kS, kG, kV, kA);
+    private double ffS = 0; //PLEASE tune these once the elevator is assembled!!!
+    private double ffG = 0;
+    private double ffV = 0;
+    private double ffA = 0;
+    private ElevatorFeedforward m_ElevatorFeedforward = new ElevatorFeedforward(ffS, ffG, ffV, ffA);
 
     double preset1;
     double preset2;
     double setpoint;
     double setPID;
     double setFeedForward;
+    public Elevator() {}
 
-    public Elevator() {
-        //m_motorRight.configure(SparkBaseConfig, null, null)
-        //m_motorRight.setInverted(true);
-    }
+    // One liner elevator logic <3
+    public void moveElevatorManual(double speed) { elevatorMotor.set(speed); }
+    public void setPreset1() { preset1 = elevatorMotor.getEncoder().getPosition(); }
+    public void setPreset2() { preset2 = elevatorMotor.getEncoder().getPosition(); }
 
-    public void moveElevatorManual(double speed) {
-        m_motor.set(speed);
-    }
-
-    public void setPreset1() {
-        preset1 = m_motor.getEncoder().getPosition();
-    }
-
-    public void setPreset2() {
-        preset2 = m_motor.getEncoder().getPosition();
-    }
-
-    public void moveElevatorPreset(int Preset) {
-        if (Preset == 1) {
-            setpoint = preset1;
-        } else if (Preset == 2) {
-            setpoint = preset2;
-        }
-        m_leftPidController.setSetpoint(setpoint);
+    // This code IS set and forget. NEVER run it once and leave..
+    public void moveElevatorToPreset(int Preset) {
+        if (Preset == 1) { setpoint = preset1; } 
+        else if (Preset == 2) { setpoint = preset2; }
+        elevatorPIDController.setSetpoint(setpoint);
         
-        setPID = (m_leftPidController.calculate(m_motor.getEncoder().getPosition(), setpoint));
-        setFeedForward = m_ElevatorFeedforward.calculate(m_leftPidController.getSetpoint());
-        m_motor.setVoltage(setPID + setFeedForward);
+        setPID = (elevatorPIDController.calculate(elevatorMotor.getEncoder().getPosition(), setpoint));
+        setFeedForward = m_ElevatorFeedforward.calculate(elevatorPIDController.getSetpoint());
+        elevatorMotor.setVoltage(setPID + setFeedForward);
     }
 
     public void elevatorLogic(XboxController XboxController) {
-        if (XboxController.getAButton()) {
-            setPreset1();
-        }
-        else if (XboxController.getBButton()) {
-            setPreset2();
-        }
-        else if (XboxController.getXButton()) {
-            moveElevatorPreset(1);
-        }
-        else if (XboxController.getYButton()) {
-            moveElevatorPreset(2);
-        }
-
-        else if (XboxController.getLeftBumperButton()) {
-            moveElevatorManual(XboxController.getRightY());
-        }
-        else {
-            moveElevatorManual(0);
-        }
+        // Probably should switch to something more robust... Most likely something command based.
+        if (XboxController.getAButton()) { setPreset1(); }
+        else if (XboxController.getBButton()) { setPreset2(); }
+        else if (XboxController.getXButton()) { moveElevatorToPreset(1); }
+        else if (XboxController.getYButton()) { moveElevatorToPreset(2); }
+        else if (XboxController.getLeftBumperButton()) { moveElevatorManual(XboxController.getRightY()); }
+        else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
     }
 }

@@ -4,7 +4,7 @@
 
 package frc.robot;
 
-import com.ctre.phoenix6.hardware.Pigeon2;
+import com.ctre.phoenix6.hardware.Pigeon2; // Holy import batman
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.PIDConstants;
@@ -28,96 +28,75 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain extends SubsystemBase {
   
-  public static final double kMaxSpeed = 1; // 3 meters per second
-  public static final double kMaxAngularSpeed = Math.PI; // 1/2 rotation per second
+  public static final double maxSwerveSpeed = 1; // 3 meters per second
+  public static final double maxSwerveAngularSpeed = Math.PI; // 1/2 rotation per second
 
-  private final Translation2d m_frontLeftLocation = new Translation2d(0.381, 0.381);
-  private final Translation2d m_frontRightLocation = new Translation2d(0.381, -0.381);
-  private final Translation2d m_backLeftLocation = new Translation2d(-0.381, 0.381);
-  private final Translation2d m_backRightLocation = new Translation2d(-0.381, -0.381);
+  private final Translation2d frontLeftLocation = new Translation2d(0.381, 0.381);
+  private final Translation2d frontRightLocation = new Translation2d(0.381, -0.381);
+  private final Translation2d backLeftLocation = new Translation2d(-0.381, 0.381);
+  private final Translation2d backRightLocation = new Translation2d(-0.381, -0.381);
 
-  private final SwerveModule m_frontLeft = new SwerveModule(5, 6, 11);
-  private final SwerveModule m_frontRight = new SwerveModule(3,4,10);
-  private final SwerveModule m_backLeft = new SwerveModule(7,8,12);
-  private final SwerveModule m_backRight = new SwerveModule(1,2,9);
+  private final SwerveModule frontLeft = new SwerveModule(5, 6, 11);
+  private final SwerveModule frontRight = new SwerveModule(3,4,10);
+  private final SwerveModule backLeft = new SwerveModule(7,8,12);
+  private final SwerveModule backRight = new SwerveModule(1,2,9);
 
-    
-  private SlewRateLimiter m_slewLimiterX = new SlewRateLimiter(2);
-  private SlewRateLimiter m_slewLimiterY = new SlewRateLimiter(2);
-  private SlewRateLimiter m_slewLimiterRot = new SlewRateLimiter(3);
+  private SlewRateLimiter slewRateLimiterX = new SlewRateLimiter(2);
+  private SlewRateLimiter slewRateLimiterY = new SlewRateLimiter(2);
+  private SlewRateLimiter slewRateLimiterRot = new SlewRateLimiter(3);
 
-  private final PPHolonomicDriveController m_ppDriveController = new PPHolonomicDriveController(
-        new PIDConstants(5.0, 0.0, 0.0),
+  private final PPHolonomicDriveController pathplannerDriveController = new PPHolonomicDriveController(
+        new PIDConstants(5.0, 0.0, 0.0), // DEFINITELY gotta be changed.
         new PIDConstants(5.0, 0.0, 0.0)
   );
 
-  private final Pigeon2 m_gyro = new Pigeon2(32);
+  private final Pigeon2 pigeon2 = new Pigeon2(32);
 
-  StructArrayPublisher<SwerveModuleState> Desired = NetworkTableInstance.getDefault().getStructArrayTopic("Desired", SwerveModuleState.struct).publish();
-  StructArrayPublisher<SwerveModuleState> Current = NetworkTableInstance.getDefault().getStructArrayTopic("Current", SwerveModuleState.struct).publish();
+  StructArrayPublisher<SwerveModuleState> DesiredState = NetworkTableInstance.getDefault().getStructArrayTopic("Desired State", SwerveModuleState.struct).publish();
+  StructArrayPublisher<SwerveModuleState> CurrentState = NetworkTableInstance.getDefault().getStructArrayTopic("Current State", SwerveModuleState.struct).publish();
 
-  private final SwerveDriveKinematics m_kinematics =
+  private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(
-          m_frontLeftLocation, m_frontRightLocation, m_backLeftLocation, m_backRightLocation);
+          frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
 
-  private final SwerveDriveOdometry m_odometry =
+  private final SwerveDriveOdometry odometry =
       new SwerveDriveOdometry(
-          m_kinematics,
-          m_gyro.getRotation2d(),
+          kinematics,
+          pigeon2.getRotation2d(),
           new SwerveModulePosition[] {
-            m_frontLeft.getPosition(),
-            m_frontRight.getPosition(),
-            m_backLeft.getPosition(),
-            m_backRight.getPosition()
+            frontLeft.getPosition(),
+            frontRight.getPosition(),
+            backLeft.getPosition(),
+            backRight.getPosition()
           });
 
-
   private Pose2d getPose() {
-    return m_odometry.getPoseMeters();
+    updateOdometry(); //Update just in case
+    return odometry.getPoseMeters();
   }
 
-  private void resetPose(Pose2d pose) {
-    m_odometry.resetPose(pose);
-  }
-
-  private ChassisSpeeds getRobotRelativeSpeeds() {
-    return m_kinematics.toChassisSpeeds(returnWheelStates());
-  }
-
-  private void driveRobotRelative(ChassisSpeeds speeds) {
-    m_kinematics.toSwerveModuleStates(speeds);
-  }
+  // I love one liners <3 (all of this is for pathplanner)
+  private void resetPose(Pose2d pose) { odometry.resetPose(pose); }
+  private ChassisSpeeds getRobotRelativeSpeeds() { return kinematics.toChassisSpeeds(returnWheelStates()); }
+  private void driveRobotRelative(ChassisSpeeds speeds) { kinematics.toSwerveModuleStates(speeds); }
 
   public Drivetrain() {
-    m_gyro.reset();
-    //RobotConfig config = new RobotConfig(
-    //  56.699,
-    //  5.486989026,
-    //  new ModuleConfig(0.1016, 3, 1.75, DCMotor.getNEO(4), 90, 4), 
-    //  new Translation2d(-0.538815367376, 0.538815367376), 
-    //  new Translation2d(0.538815367376, 0.538815367376), 
-    //  new Translation2d(-0.538815367376, -0.538815367376), 
-    //  new Translation2d(0.538815367376, -0.538815367376)
-
-    //  
-    //);
-    RobotConfig config = null;
+    pigeon2.reset();
+    RobotConfig robotConfig = null; // Thank you team 6517 for this brilliant workaround o7
     try{
-      config = RobotConfig.fromGUISettings();
-    } catch (Exception e) {
-      // Handle exception as needed
-      e.addSuppressed(e);
+      robotConfig = RobotConfig.fromGUISettings();
+    } catch (Exception error) {
+      // Handle exception IF needed
+      error.addSuppressed(error);
     }
     
-    
-
     AutoBuilder.configure(
       this::getPose, 
       this::resetPose, 
       this::getRobotRelativeSpeeds, 
       (speeds, feedforwards) -> driveRobotRelative(speeds), 
-      m_ppDriveController,
-      config, 
+      pathplannerDriveController,
+      robotConfig, 
       () -> {
         var alliance = DriverStation.getAlliance();
         if (alliance.isPresent()) {
@@ -143,109 +122,82 @@ public class Drivetrain extends SubsystemBase {
    */
   public void drive(
       double xSpeed, double ySpeed, double rot, boolean fieldRelative, double periodSeconds) {
-    var swerveModuleStates =m_kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(fieldRelative
-                    ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, m_gyro.getRotation2d()) // Feild reliative
+    var swerveModuleStates = kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(fieldRelative
+                    ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d()) // Felid relative
                     : new ChassisSpeeds(xSpeed, ySpeed, rot), // Absolute
                 periodSeconds));
-    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, kMaxSpeed);
-    m_frontLeft.setDesiredState(swerveModuleStates[0]);
-    m_frontRight.setDesiredState(swerveModuleStates[1]);
-    m_backLeft.setDesiredState(swerveModuleStates[2]);
-    m_backRight.setDesiredState(swerveModuleStates[3]);
-    updateSim();
+    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
+    frontLeft.setDesiredState(swerveModuleStates[0]);
+    frontRight.setDesiredState(swerveModuleStates[1]);
+    backLeft.setDesiredState(swerveModuleStates[2]);
+    backRight.setDesiredState(swerveModuleStates[3]);
+    updateDashboard();
   }
 
-  public void updateSim() {
+  public void updateDashboard() {
     SwerveModuleState[] DesiredS = new SwerveModuleState[] {
-          m_frontLeft.getDesiredState(),
-          m_frontRight.getDesiredState(),
-          m_backLeft.getDesiredState(),
-          m_backRight.getDesiredState()
+          frontLeft.getDesiredState(),
+          frontRight.getDesiredState(),
+          backLeft.getDesiredState(),
+          backRight.getDesiredState()
     };
-    Desired.set(DesiredS);
+    DesiredState.set(DesiredS);
 
     SwerveModuleState[] CurrentS = new SwerveModuleState[] {
-      m_frontLeft.getState(),
-      m_frontRight.getState(),
-      m_backLeft.getState(),
-      m_backRight.getState()
-  };
-  Current.set(CurrentS);
+      frontLeft.getState(),
+      frontRight.getState(),
+      backLeft.getState(),
+      backRight.getState()
+    };
+    CurrentState.set(CurrentS);
   }
 
   private SwerveModuleState[] returnWheelStates() {
     return new SwerveModuleState[] {
-      m_frontLeft.getState(),
-      m_frontRight.getState(),
-      m_backLeft.getState(),
-      m_backRight.getState()
+      frontLeft.getState(),
+      frontRight.getState(),
+      backLeft.getState(),
+      backRight.getState()
     };
   }
 
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
-    m_odometry.update(
-        m_gyro.getRotation2d(),
+    odometry.update(
+        pigeon2.getRotation2d(),
         new SwerveModulePosition[] {
-          m_frontLeft.getPosition(),
-          m_frontRight.getPosition(),
-          m_backLeft.getPosition(),
-          m_backRight.getPosition()
+          frontLeft.getPosition(),
+          frontRight.getPosition(),
+          backLeft.getPosition(),
+          backRight.getPosition()
         });
   }
-
-  public double findWheelDiff() {
-    return (m_frontRight.getDesiredState().angle.getRadians() - m_frontRight.getState().angle.getRadians());
+  /** This is for system identification */
+  public void setMotorVoltage(double volts) { 
+    frontLeft.moveWithVoltage(volts);
+    frontRight.moveWithVoltage(volts);
+    backLeft.moveWithVoltage(volts);
+    backRight.moveWithVoltage(volts);
   }
 
-  public void setMotorVoltage(double volts) {
-    m_frontLeft.moveWithVoltage(volts);
-    m_frontRight.moveWithVoltage(volts);
-    m_backLeft.moveWithVoltage(volts);
-    m_backRight.moveWithVoltage(volts);
-  }
+  public void driveWithJoystick(boolean fieldRelative, XboxController driverController, Drivetrain swerveDrive, double period) {
+    var speedLimit = 1 - (driverController.getRightTriggerAxis() * .5);
+    var xSpeed = (driverController.getLeftY()* Drivetrain.maxSwerveSpeed * speedLimit);
+    var ySpeed = (driverController.getLeftX() * Drivetrain.maxSwerveSpeed * speedLimit);
+    var rotSpeed = (driverController.getRightX() * Drivetrain.maxSwerveAngularSpeed * speedLimit) * -1; //invert so that turning is more natural
 
-
-
-  public void driveWithJoystick(boolean fieldRelative, XboxController m_Drivercontroller, Drivetrain m_swerve, double period) {
-    // Get the x speed. We are inverting this because Xbox controllers return
-    // negative values when we push forward.
-    var speedLimit = 1 - (m_Drivercontroller.getRightTriggerAxis() * .5);
-
-
-    var xSpeed =
-        (m_Drivercontroller.getLeftY()* Drivetrain.kMaxSpeed * speedLimit);
-
-    // Get the y speed or sideways/strafe speed. We are inverting this because
-    // we want a positive value when we pull to the left. Xbox controllers
-    // return positive values when you pull to the right by default.
-    var ySpeed =
-        (m_Drivercontroller.getLeftX() * Drivetrain.kMaxSpeed * speedLimit);
-
-    // Get the rate of angular rotation. We are inverting this because we want a
-    // positive value when we pull to the left (remember, CCW is positive in
-    // mathematics). Xbox controllers return positive values when you pull to
-    // the right by default.
-    var rotSpeed =
-        (m_Drivercontroller.getRightX() * Drivetrain.kMaxAngularSpeed * speedLimit) * -1;
-
-    if (m_Drivercontroller.getPOV() == 0) {
-      xSpeed = 0.25;
-    } else if (m_Drivercontroller.getPOV() == 180) {
-      xSpeed = -0.25;
-    }
-    if (m_Drivercontroller.getPOV() == 90) {
-      ySpeed = 0.25;
-    } else if (m_Drivercontroller.getPOV() == 270) {
-      ySpeed = -0.25;
+    var POV = driverController.getPOV();
+    if (POV != -1) { //Drives with the DPad instead of the joystick for perfect 45° angles
+      var POVRadians = Math.toRadians(POV);
+      xSpeed = Math.cos(POVRadians) * 0.25;
+      ySpeed = Math.sin(POVRadians) * 0.25;
+      fieldRelative = false; // Forces it to be robot relative
     }
     
-    
-
-    m_swerve.drive(
-      m_slewLimiterX.calculate(xSpeed), 
-      m_slewLimiterY.calculate(ySpeed), 
-      m_slewLimiterRot.calculate(rotSpeed), 
+    swerveDrive.drive(
+      slewRateLimiterX.calculate(xSpeed), 
+      slewRateLimiterY.calculate(ySpeed), 
+      slewRateLimiterRot.calculate(rotSpeed), 
       fieldRelative, period
     );
   }
