@@ -12,7 +12,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 public class Robot extends TimedRobot {
   private final XboxController driverController = new XboxController(0);
   private final XboxController elevatorController = new XboxController(1);
-  private final Drivetrain swerveDrivetrain = new Drivetrain();
+  private Drivetrain swerveDrivetrain;
   private final Elevator elevator = new Elevator();
   private Command autoCommand;
   
@@ -20,14 +20,14 @@ public class Robot extends TimedRobot {
   public void autonomousInit() {
     autoCommand = swerveDrivetrain.getAutonomousCommand();
     if (autoCommand != null) {
-      swerveDrivetrain.getAutonomousCommand().schedule();
+      autoCommand.schedule();
     }
   }
 
   @Override
   public void teleopInit() {
     if (autoCommand != null) {
-      swerveDrivetrain.getAutonomousCommand().schedule();
+      autoCommand.cancel();
     }
   }
 
@@ -35,7 +35,10 @@ public class Robot extends TimedRobot {
   public void autonomousPeriodic() {}
 
   @Override
-  public void robotInit() {}
+  public void robotInit() {
+    swerveDrivetrain = new Drivetrain();
+    CommandScheduler.getInstance().registerSubsystem(swerveDrivetrain);
+  }
 
   @Override 
   public void robotPeriodic() {

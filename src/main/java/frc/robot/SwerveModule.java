@@ -68,15 +68,17 @@ public class SwerveModule {
   }
 
   public double getDriveSpeedMetersPerSecond() {
-    double inchesPerMinute = m_driveEncoder.getVelocity() * 9.424777961;
-    double inchesPerSecond = inchesPerMinute / 60;
-    double metersPerSecond = inchesPerSecond * 0.0254;
-    return metersPerSecond;
+    double RawRPM = m_driveMotor.getEncoder().getVelocity();
+    RawRPM = (RawRPM / 6.12);
+    double RawRPS = RawRPM / 60;
+    double Conversion = (2 * Math.PI * 0.0508);
+    double MPS = RawRPS * Conversion;
+    return MPS;
   }
 
   /* Returns the distance traveled by the drive encoder in meters */
   public double getDriveDistanceMeters() {
-    return (m_driveEncoder.getPosition() * 9.424777961) * 0.0254; // 9.4...  is the wheel circumference, 0.0254 is inches to meters
+    return ((m_driveEncoder.getPosition()/6.12) * (2*Math.PI*0.0508)); 
   }
 
   /* Returns the angle traveled by the rotation encoder in radians */
@@ -103,7 +105,7 @@ public class SwerveModule {
    *
    * @return The current position of the module.
    */
-  public SwerveModulePosition getPosition() {
+  public SwerveModulePosition returnPosition() {
     return new SwerveModulePosition(
         getDriveDistanceMeters(), new Rotation2d(getRotationEncoderPosition()));
   }

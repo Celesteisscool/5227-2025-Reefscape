@@ -22,13 +22,15 @@ import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain extends SubsystemBase {
   
-  public static final double maxSwerveSpeed = 1; // 3 meters per second
+  public static final double maxSwerveSpeed = 1.5; // 3 meters per second
   public static final double maxSwerveAngularSpeed = Math.PI; // 1/2 rotation per second
 
   private final Translation2d frontLeftLocation = new Translation2d(0.381, 0.381);
@@ -55,6 +57,8 @@ public class Drivetrain extends SubsystemBase {
   StructArrayPublisher<SwerveModuleState> DesiredState = NetworkTableInstance.getDefault().getStructArrayTopic("Desired State", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> CurrentState = NetworkTableInstance.getDefault().getStructArrayTopic("Current State", SwerveModuleState.struct).publish();
 
+  private final SendableChooser<Command> autoChooser;
+
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(
           frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
@@ -64,10 +68,10 @@ public class Drivetrain extends SubsystemBase {
           kinematics,
           pigeon2.getRotation2d(),
           new SwerveModulePosition[] {
-            frontLeft.getPosition(),
-            frontRight.getPosition(),
-            backLeft.getPosition(),
-            backRight.getPosition()
+            frontLeft.returnPosition(),
+            frontRight.returnPosition(),
+            backLeft.returnPosition(),
+            backRight.returnPosition()
           });
 
   private Pose2d getPose() {
@@ -76,9 +80,15 @@ public class Drivetrain extends SubsystemBase {
   }
 
   // I love one liners <3 (all of this is for pathplanner)
-  private void resetPose(Pose2d pose) { odometry.resetPose(pose); }
+  private void resetPose(Pose2d pose) { odometry.resetPosition(pigeon2.getRotation2d(), returnWheelPositions(), pose); }
   private ChassisSpeeds getRobotRelativeSpeeds() { return kinematics.toChassisSpeeds(returnWheelStates()); }
-  private void driveRobotRelative(ChassisSpeeds speeds) { kinematics.toSwerveModuleStates(speeds); }
+  
+  private void driveRobotRelative(ChassisSpeeds robotRelativeSpeeds) { 
+    ChassisSpeeds targetSpeeds = ChassisSpeeds.discretize(robotRelativeSpeeds, 0.2);
+    SwerveModuleState[] targetStates = kinematics.toSwerveModuleStates(targetSpeeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, maxSwerveSpeed);
+    setStates(targetStates);
+   }
 
   public Drivetrain() {
     pigeon2.reset();
@@ -106,10 +116,13 @@ public class Drivetrain extends SubsystemBase {
       },
       this // Reference to this subsystem to set requirements
       );
+
+    autoChooser = AutoBuilder.buildAutoChooser();
+    SmartDashboard.putData("Auto Mode", autoChooser);
   }
 
   public Command getAutonomousCommand() {
-    return new PathPlannerAuto("Example Auto");
+    return autoChooser.getSelected();
   }
 
   /**
@@ -127,11 +140,15 @@ public class Drivetrain extends SubsystemBase {
                     : new ChassisSpeeds(xSpeed, ySpeed, rot), // Absolute
                 periodSeconds));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
-    frontLeft.setDesiredState(swerveModuleStates[0]);
-    frontRight.setDesiredState(swerveModuleStates[1]);
-    backLeft.setDesiredState(swerveModuleStates[2]);
-    backRight.setDesiredState(swerveModuleStates[3]);
+    setStates(swerveModuleStates);
     updateDashboard();
+  }
+
+  private void setStates(SwerveModuleState[] states) {
+    frontLeft.setDesiredState(states[0]);
+    frontRight.setDesiredState(states[1]);
+    backLeft.setDesiredState(states[2]);
+    backRight.setDesiredState(states[3]);
   }
 
   public void updateDashboard() {
@@ -161,15 +178,24 @@ public class Drivetrain extends SubsystemBase {
     };
   }
 
+  private SwerveModulePosition[] returnWheelPositions() {
+    return new SwerveModulePosition[] {
+      frontLeft.returnPosition(),
+      frontRight.returnPosition(),
+      backLeft.returnPosition(),
+      backRight.returnPosition()
+    };
+  }
+
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
     odometry.update(
         pigeon2.getRotation2d(),
         new SwerveModulePosition[] {
-          frontLeft.getPosition(),
-          frontRight.getPosition(),
-          backLeft.getPosition(),
-          backRight.getPosition()
+          frontLeft.returnPosition(),
+          frontRight.returnPosition(),
+          backLeft.returnPosition(),
+          backRight.returnPosition()
         });
   }
   /** This is for system identification */
