@@ -23,17 +23,7 @@ public class Robot extends TimedRobot {
       autoCommand.schedule();
     }
   }
-
-  @Override
-  public void teleopInit() {
-    if (autoCommand != null) {
-      autoCommand.cancel();
-    }
-  }
-
-  @Override
-  public void autonomousPeriodic() {}
-
+  
   @Override
   public void robotInit() {
     swerveDrivetrain = new Drivetrain();
@@ -46,17 +36,18 @@ public class Robot extends TimedRobot {
   }
 
   @Override
-  public void teleopPeriodic() {
-    swerveDrivetrain.driveWithJoystick(true, driverController, swerveDrivetrain, getPeriod());
-    elevator.elevatorLogic(elevatorController);
+  public void autonomousPeriodic() {}
+
+  @Override
+  public void teleopInit() {
+    if (autoCommand != null) {
+      autoCommand.cancel();
+    }
   }
 
   @Override
-  public void simulationPeriodic() {}
-
-  public void testPeriodic() {
-    if (driverController.getXButton()) {
-      swerveDrivetrain.setMotorVoltage(0.45);
-    }
+  public void teleopPeriodic() {
+    swerveDrivetrain.driveWithJoystick(true, driverController, swerveDrivetrain, getPeriod());
+    elevator.elevatorLogic(elevatorController);
   }
 }

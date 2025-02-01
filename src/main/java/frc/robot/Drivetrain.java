@@ -6,7 +6,6 @@ package frc.robot;
 
 import com.ctre.phoenix6.hardware.Pigeon2; // Holy import batman
 import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
