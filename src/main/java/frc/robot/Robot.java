@@ -10,9 +10,8 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends TimedRobot {
-  private final XboxController driverController = new XboxController(0);
-  private final XboxController elevatorController = new XboxController(1);
-  private Drivetrain swerveDrivetrain;
+  
+  
   private final Elevator elevator = new Elevator();
   private Command autoCommand;
   
@@ -47,7 +46,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopPeriodic() {
-    swerveDrivetrain.driveWithJoystick(true, driverController, swerveDrivetrain, getPeriod());
-    elevator.elevatorLogic(elevatorController);
+    swerveDrivetrain.teleopDriveLogic(true, driverController, swerveDrivetrain, getPeriod()); //ima be moving this to teleop.java
+    // elevator.elevatorLogic(elevatorController);
   }
 }

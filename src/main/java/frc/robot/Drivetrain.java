@@ -11,6 +11,7 @@ import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
@@ -20,7 +21,6 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -29,29 +29,25 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain extends SubsystemBase {
   
-  public static final double maxSwerveSpeed = 1.5; // 3 meters per second
-  public static final double maxSwerveAngularSpeed = Math.PI; // 1/2 rotation per second
+  public static final double maxSwerveSpeed        = Constants.maxSwerveSpeed;
+  public static final double maxSwerveAngularSpeed = Constants.maxSwerveAngularSpeed;
 
-  private final Translation2d frontLeftLocation = new Translation2d(0.381, 0.381);
-  private final Translation2d frontRightLocation = new Translation2d(0.381, -0.381);
-  private final Translation2d backLeftLocation = new Translation2d(-0.381, 0.381);
-  private final Translation2d backRightLocation = new Translation2d(-0.381, -0.381);
+  private final Translation2d frontLeftLocation  = Constants.frontLeftLocation;
+  private final Translation2d frontRightLocation = Constants.frontRightLocation;
+  private final Translation2d backLeftLocation   = Constants.backLeftLocation;
+  private final Translation2d backRightLocation  = Constants.backRightLocation;
 
-  private final SwerveModule frontLeft = new SwerveModule(5, 6, 11);
-  private final SwerveModule frontRight = new SwerveModule(3,4,10);
-  private final SwerveModule backLeft = new SwerveModule(7,8,12);
-  private final SwerveModule backRight = new SwerveModule(1,2,9);
-
-  private SlewRateLimiter slewRateLimiterX = new SlewRateLimiter(2);
-  private SlewRateLimiter slewRateLimiterY = new SlewRateLimiter(2);
-  private SlewRateLimiter slewRateLimiterRot = new SlewRateLimiter(3);
+  private final SwerveModule frontLeft  = new SwerveModule(Constants.frontLeftIDs[0],  Constants.frontLeftIDs[1],  Constants.frontLeftIDs[2]);
+  private final SwerveModule frontRight = new SwerveModule(Constants.frontRightIDs[0], Constants.frontRightIDs[1], Constants.frontRightIDs[2]);
+  private final SwerveModule backLeft   = new SwerveModule(Constants.backLeftIDs[0],   Constants.backLeftIDs[1],   Constants.backLeftIDs[2]);
+  private final SwerveModule backRight  = new SwerveModule(Constants.backRightIDs[0],  Constants.backRightIDs[1],  Constants.backRightIDs[2]);
 
   private final PPHolonomicDriveController pathplannerDriveController = new PPHolonomicDriveController(
         new PIDConstants(5.0, 0.0, 0.0), // DEFINITELY gotta be changed.
         new PIDConstants(5.0, 0.0, 0.0)
   );
 
-  private final Pigeon2 pigeon2 = new Pigeon2(32);
+  private final Pigeon2 pigeon2 = new Pigeon2(Constants.gyroID);
 
   StructArrayPublisher<SwerveModuleState> DesiredState = NetworkTableInstance.getDefault().getStructArrayTopic("Desired State", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> CurrentState = NetworkTableInstance.getDefault().getStructArrayTopic("Current State", SwerveModuleState.struct).publish();
@@ -65,7 +61,7 @@ public class Drivetrain extends SubsystemBase {
   private final SwerveDriveOdometry odometry =
       new SwerveDriveOdometry(
           kinematics,
-          pigeon2.getRotation2d(),
+          getGyroRotation2d(),
           new SwerveModulePosition[] {
             frontLeft.returnPosition(),
             frontRight.returnPosition(),
@@ -79,7 +75,7 @@ public class Drivetrain extends SubsystemBase {
   }
 
   // I love one liners <3 (all of this is for pathplanner)
-  private void resetPose(Pose2d pose) { odometry.resetPosition(pigeon2.getRotation2d(), returnWheelPositions(), pose); }
+  private void resetPose(Pose2d pose) { odometry.resetPosition(getGyroRotation2d(), returnWheelPositions(), pose); }
   private ChassisSpeeds getRobotRelativeSpeeds() { return kinematics.toChassisSpeeds(returnWheelStates()); }
   
   private void driveRobotRelative(ChassisSpeeds robotRelativeSpeeds) { 
@@ -124,6 +120,10 @@ public class Drivetrain extends SubsystemBase {
     return autoChooser.getSelected();
   }
 
+  public Rotation2d getGyroRotation2d() {
+    return pigeon2.getRotation2d().plus(new Rotation2d(Math.PI));
+  }
+
   /**
    * Method to drive the robot using joystick info.
    *
@@ -134,15 +134,14 @@ public class Drivetrain extends SubsystemBase {
    */
   public void drive(
       double xSpeed, double ySpeed, double rot, boolean fieldRelative, double periodSeconds) {
-    var swerveModuleStates = kinematics.toSwerveModuleStates(ChassisSpeeds.discretize(fieldRelative
-                    ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d()) // Felid relative
-                    : new ChassisSpeeds(xSpeed, ySpeed, rot), // Absolute
-                periodSeconds));
+    var swerveModuleStates = kinematics.toSwerveModuleStates(
+      ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d()), // Felid relative
+      periodSeconds); // do you not use discretize??????
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
     setStates(swerveModuleStates);
     updateDashboard();
   }
-
+// wait let me update code
   private void setStates(SwerveModuleState[] states) {
     frontLeft.setDesiredState(states[0]);
     frontRight.setDesiredState(states[1]);
@@ -189,7 +188,7 @@ public class Drivetrain extends SubsystemBase {
   /** Updates the field relative position of the robot. */
   public void updateOdometry() {
     odometry.update(
-        pigeon2.getRotation2d(),
+        getGyroRotation2d(),
         new SwerveModulePosition[] {
           frontLeft.returnPosition(),
           frontRight.returnPosition(),
@@ -205,25 +204,6 @@ public class Drivetrain extends SubsystemBase {
     backRight.moveWithVoltage(volts);
   }
 
-  public void driveWithJoystick(boolean fieldRelative, XboxController driverController, Drivetrain swerveDrive, double period) {
-    var speedLimit = 1 - (driverController.getRightTriggerAxis() * .5);
-    var xSpeed = (driverController.getLeftY()* Drivetrain.maxSwerveSpeed * speedLimit);
-    var ySpeed = (driverController.getLeftX() * Drivetrain.maxSwerveSpeed * speedLimit);
-    var rotSpeed = (driverController.getRightX() * Drivetrain.maxSwerveAngularSpeed * speedLimit) * -1; //invert so that turning is more natural
-
-    var POV = driverController.getPOV();
-    if (POV != -1) { //Drives with the DPad instead of the joystick for perfect 45° angles
-      var POVRadians = Math.toRadians(POV);
-      xSpeed = Math.cos(POVRadians) * 0.25;
-      ySpeed = Math.sin(POVRadians) * 0.25;
-      fieldRelative = false; // Forces it to be robot relative
-    }
-    
-    swerveDrive.drive(
-      slewRateLimiterX.calculate(xSpeed), 
-      slewRateLimiterY.calculate(ySpeed), 
-      slewRateLimiterRot.calculate(rotSpeed), 
-      fieldRelative, period
-    );
-  }
+  // Should i move this to a different class? I feel like a teleop class wouldnt hurt...
+  
 }
