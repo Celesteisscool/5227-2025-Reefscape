@@ -1,4 +1,7 @@
-WIP code for frc team 5227's 2025 year -  REEFSCAPE
+# 5227 | FRC 2025 | REEFSCAPE   
+Eagle Elite Programing team:
+- Celesteisscool\
+( Please dont judge my code / commits :P )
 
-Please dont judge awful code...
-still a massive WIP and prob should not be used as example code...
+HUGE thanks to 6517 and 3824.\
+Shoutout tennessee teams <3
