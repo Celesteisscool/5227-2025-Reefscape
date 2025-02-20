@@ -6,8 +6,8 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Elevator {
-    private SparkMax elevatorMotor = new SparkMax(21, SparkMax.MotorType.kBrushless);
-    private PIDController elevatorPIDController = new PIDController(3, 0, 0);
+    private SparkMax elevatorMotor = new SparkMax(25, SparkMax.MotorType.kBrushless);
+    private PIDController elevatorPIDController = new PIDController(1, 0, 0);
 
     private double ffS = 0; //PLEASE tune these once the elevator is assembled!!!
     private double ffG = 0;
@@ -20,10 +20,9 @@ public class Elevator {
     double setpoint;
     double setPID;
     double setFeedForward;
-    public Elevator() {}
 
     // One liner elevator logic <3
-    public void moveElevatorManual(double speed) { elevatorMotor.set(speed); }
+    public void moveElevatorManual(double speed) { elevatorMotor.setVoltage(speed); }
     public void setPreset1() { preset1 = elevatorMotor.getEncoder().getPosition(); }
     public void setPreset2() { preset2 = elevatorMotor.getEncoder().getPosition(); }
 

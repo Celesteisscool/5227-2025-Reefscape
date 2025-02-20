@@ -1,5 +1,6 @@
 package frc.robot;
 
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.XboxController;
@@ -27,10 +28,17 @@ public class Constants {
 
     // Global Constants 
     public static Drivetrain swerveDrivetrain = new Drivetrain();
+    public static Elevator elevatorClass = new Elevator();
+
     public static XboxController driverController = new XboxController(0);
     public static XboxController elevatorController = new XboxController(1);
     
     // Vision Constants
     public static final Vision vision = new Vision();
+
+    //Auto Constants 
+    public final static PIDController xController =   new PIDController(10.0, 0.0, 0.0);
+    public final static PIDController yController =   new PIDController(10.0, 0.0, 0.0);
+    public final static PIDController rotController = new PIDController(7.5, 0.0, 0.0); 
 
 }

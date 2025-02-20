@@ -5,29 +5,16 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends TimedRobot {
   
-  
-  private final Elevator elevator = new Elevator();
-  private Command autoCommand;
-  
   @Override
   public void autonomousInit() {
-    autoCommand = swerveDrivetrain.getAutonomousCommand();
-    if (autoCommand != null) {
-      autoCommand.schedule();
-    }
   }
   
   @Override
-  public void robotInit() {
-    swerveDrivetrain = new Drivetrain();
-    CommandScheduler.getInstance().registerSubsystem(swerveDrivetrain);
-  }
+  public void robotInit() {}
 
   @Override 
   public void robotPeriodic() {
@@ -39,14 +26,10 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    if (autoCommand != null) {
-      autoCommand.cancel();
-    }
   }
 
   @Override
   public void teleopPeriodic() {
-    swerveDrivetrain.teleopDriveLogic(true, driverController, swerveDrivetrain, getPeriod()); //ima be moving this to teleop.java
-    // elevator.elevatorLogic(elevatorController);
+    Teleop.runTeleop();
   }
 }

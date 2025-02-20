@@ -5,11 +5,6 @@
 package frc.robot;
 
 import com.ctre.phoenix6.hardware.Pigeon2; // Holy import batman
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.config.PIDConstants;
-import com.pathplanner.lib.config.RobotConfig;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -20,9 +15,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
@@ -42,23 +35,16 @@ public class Drivetrain extends SubsystemBase {
   private final SwerveModule backLeft   = new SwerveModule(Constants.backLeftIDs[0],   Constants.backLeftIDs[1],   Constants.backLeftIDs[2]);
   private final SwerveModule backRight  = new SwerveModule(Constants.backRightIDs[0],  Constants.backRightIDs[1],  Constants.backRightIDs[2]);
 
-  private final PPHolonomicDriveController pathplannerDriveController = new PPHolonomicDriveController(
-        new PIDConstants(5.0, 0.0, 0.0), // DEFINITELY gotta be changed.
-        new PIDConstants(5.0, 0.0, 0.0)
-  );
-
   private final Pigeon2 pigeon2 = new Pigeon2(Constants.gyroID);
 
   StructArrayPublisher<SwerveModuleState> DesiredState = NetworkTableInstance.getDefault().getStructArrayTopic("Desired State", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> CurrentState = NetworkTableInstance.getDefault().getStructArrayTopic("Current State", SwerveModuleState.struct).publish();
 
-  private final SendableChooser<Command> autoChooser;
-
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(
           frontLeftLocation, frontRightLocation, backLeftLocation, backRightLocation);
 
-  private final SwerveDriveOdometry odometry =
+  public final SwerveDriveOdometry odometry =
       new SwerveDriveOdometry(
           kinematics,
           getGyroRotation2d(),
@@ -69,55 +55,8 @@ public class Drivetrain extends SubsystemBase {
             backRight.returnPosition()
           });
 
-  private Pose2d getPose() {
-    updateOdometry(); //Update just in case
-    return odometry.getPoseMeters();
-  }
-
-  // I love one liners <3 (all of this is for pathplanner)
-  private void resetPose(Pose2d pose) { odometry.resetPosition(getGyroRotation2d(), returnWheelPositions(), pose); }
-  private ChassisSpeeds getRobotRelativeSpeeds() { return kinematics.toChassisSpeeds(returnWheelStates()); }
-  
-  private void driveRobotRelative(ChassisSpeeds robotRelativeSpeeds) { 
-    ChassisSpeeds targetSpeeds = ChassisSpeeds.discretize(robotRelativeSpeeds, 0.2);
-    SwerveModuleState[] targetStates = kinematics.toSwerveModuleStates(targetSpeeds);
-    SwerveDriveKinematics.desaturateWheelSpeeds(targetStates, maxSwerveSpeed);
-    setStates(targetStates);
-   }
-
   public Drivetrain() {
-    pigeon2.reset();
-    RobotConfig robotConfig = null; // Thank you team 6517 for this brilliant workaround o7
-    try{
-      robotConfig = RobotConfig.fromGUISettings();
-    } catch (Exception error) {
-      // Handle exception IF needed
-      error.addSuppressed(error);
-    }
-    
-    AutoBuilder.configure(
-      this::getPose, 
-      this::resetPose, 
-      this::getRobotRelativeSpeeds, 
-      (speeds, feedforwards) -> driveRobotRelative(speeds), 
-      pathplannerDriveController,
-      robotConfig, 
-      () -> {
-        var alliance = DriverStation.getAlliance();
-        if (alliance.isPresent()) {
-          return alliance.get() == DriverStation.Alliance.Red;
-        }
-        return false;
-      },
-      this // Reference to this subsystem to set requirements
-      );
-
-    autoChooser = AutoBuilder.buildAutoChooser();
-    SmartDashboard.putData("Auto Mode", autoChooser);
-  }
-
-  public Command getAutonomousCommand() {
-    return autoChooser.getSelected();
+    pigeon2.reset();  
   }
 
   public Rotation2d getGyroRotation2d() {
@@ -133,15 +72,20 @@ public class Drivetrain extends SubsystemBase {
    * @param fieldRelative Whether the provided x and y speeds are relative to the field.
    */
   public void drive(
-      double xSpeed, double ySpeed, double rot, boolean fieldRelative, double periodSeconds) {
-    var swerveModuleStates = kinematics.toSwerveModuleStates(
-      ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d()), // Felid relative
-      periodSeconds); // do you not use discretize??????
+      double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+    var swerveModuleStates = 
+    kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d()));
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
     setStates(swerveModuleStates);
     updateDashboard();
   }
-// wait let me update code
+
+  public void driveFieldRelativeFromSpeed(ChassisSpeeds speeds) {
+    var swerveModuleStates  = kinematics.toSwerveModuleStates(speeds);
+    SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
+    updateDashboard();
+  }
+
   private void setStates(SwerveModuleState[] states) {
     frontLeft.setDesiredState(states[0]);
     frontRight.setDesiredState(states[1]);
@@ -149,6 +93,7 @@ public class Drivetrain extends SubsystemBase {
     backRight.setDesiredState(states[3]);
   }
 
+  /** Updates the dashboard with the current state of the swerve modules */
   public void updateDashboard() {
     SwerveModuleState[] DesiredS = new SwerveModuleState[] {
           frontLeft.getDesiredState(),
@@ -195,15 +140,5 @@ public class Drivetrain extends SubsystemBase {
           backLeft.returnPosition(),
           backRight.returnPosition()
         });
-  }
-  /** This is for system identification */
-  public void setMotorVoltage(double volts) { 
-    frontLeft.moveWithVoltage(volts);
-    frontRight.moveWithVoltage(volts);
-    backLeft.moveWithVoltage(volts);
-    backRight.moveWithVoltage(volts);
-  }
-
-  // Should i move this to a different class? I feel like a teleop class wouldnt hurt...
-  
+  }  
 }
