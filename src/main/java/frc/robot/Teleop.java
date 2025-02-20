@@ -8,7 +8,7 @@ public class Teleop {
 	public static void driveFunction() {
 		XboxController driverController = Constants.driverController;
 		Drivetrain Drivetrain = Constants.drivetrainClass;
-		//asdsad
+		
 		double speedLimiter = 1 - (driverController.getRightTriggerAxis() * .5);
 		double xSpeed = (driverController.getLeftY()* Constants.maxSwerveSpeed * speedLimiter);
 		double ySpeed = (driverController.getLeftX() * Constants.maxSwerveSpeed * speedLimiter);
