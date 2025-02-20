@@ -3,9 +3,11 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Teleop {
+	public Teleop() {} //This makes compiler happy
+
 	public static void driveFunction() {
 		XboxController driverController = Constants.driverController;
-		Drivetrain Drivetrain = Constants.swerveDrivetrain;
+		Drivetrain Drivetrain = Constants.drivetrainClass;
 		//asdsad
 		double speedLimiter = 1 - (driverController.getRightTriggerAxis() * .5);
 		double xSpeed = (driverController.getLeftY()* Constants.maxSwerveSpeed * speedLimiter);
@@ -20,7 +22,7 @@ public class Teleop {
 			fieldRelative = false; // Forces it to be robot relative
 		}
 
-		if (driverController.getAButton()) { rotSpeed = Constants.vision.getCalculatedRotateOutput(); }
+		if (driverController.getAButton()) { rotSpeed = Constants.visionClass.getCalculatedRotateOutput(); }
 		
 		Drivetrain.drive(
 			Constants.slewRateLimiterX.calculate(xSpeed), 
@@ -30,7 +32,7 @@ public class Teleop {
 		);
 	};
 		
-	public static void runTeleop() {
+	public void teleopPeriodic() {
 		driveFunction();
 	}
 }

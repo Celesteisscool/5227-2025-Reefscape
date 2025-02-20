@@ -1,8 +1,6 @@
 package frc.robot;
 
-import java.lang.StackWalker.Option;
 import java.util.Optional;
-
 import choreo.Choreo;
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
@@ -17,7 +15,7 @@ public class Auto {
     private PIDController xController   = Constants.xController;
     private PIDController yController   = Constants.yController;
     private PIDController rotController = Constants.rotController;
-    private Drivetrain drivetrain = Constants.swerveDrivetrain;
+    private Drivetrain drivetrain = Constants.drivetrainClass;
     private final Optional<Trajectory<SwerveSample>> trajectory = Choreo.loadTrajectory("myTrajectory");
     
     private final Timer timer = new Timer();
@@ -32,23 +30,30 @@ public class Auto {
     public void autonomousInit() {
         if (trajectory.isPresent()) {
             Optional<Pose2d> initialPose = trajectory.get().getInitialPose(isRedAlliance());
+
+            if (initialPose.isPresent()) {
+                drivetrain.resetOdometry(initialPose.get());
+            }
         }
         timer.restart();
     }
 
-    public void followTrajectory(SwerveSample sample) {
-        // Get the current pose of the robot
-        Pose2d pose = drivetrain.odometry.getPoseMeters();
+    public void followTrajectory(Optional<SwerveSample> inputSample) {
+        if (inputSample.isPresent()) {
+            var sample = inputSample.get();
+            // Get the current pose of the robot
+            Pose2d pose = drivetrain.odometry.getPoseMeters();
 
-        // Generate the next speeds for the robot
-        ChassisSpeeds speeds = new ChassisSpeeds(
-            sample.vx + xController.calculate(pose.getX(), sample.x),
-            sample.vy + yController.calculate(pose.getY(), sample.y),
-            sample.omega + rotController.calculate(pose.getRotation().getRadians(), sample.heading)
-        );
+            // Generate the next speeds for the robot
+            ChassisSpeeds speeds = new ChassisSpeeds(
+                sample.vx + xController.calculate(pose.getX(), sample.x),
+                sample.vy + yController.calculate(pose.getY(), sample.y),
+                sample.omega + rotController.calculate(pose.getRotation().getRadians(), sample.heading)
+            );
 
-        // Apply the generated speeds
-        drivetrain.driveFieldRelativeFromSpeed(speeds);
+            // Apply the generated speeds
+            drivetrain.driveFieldRelativeFromSpeed(speeds);
+        }   
     }
 
     public void autonomousPeriodic() {

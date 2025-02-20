@@ -27,14 +27,12 @@ public class Constants {
     public static final Translation2d backRightLocation = new Translation2d(-0.381, -0.381);
 
     // Global Constants 
-    public static Drivetrain swerveDrivetrain = new Drivetrain();
+    public static Drivetrain drivetrainClass = new Drivetrain();
     public static Elevator elevatorClass = new Elevator();
+    public static final Vision visionClass = new Vision();
 
     public static XboxController driverController = new XboxController(0);
     public static XboxController elevatorController = new XboxController(1);
-    
-    // Vision Constants
-    public static final Vision vision = new Vision();
 
     //Auto Constants 
     public final static PIDController xController =   new PIDController(10.0, 0.0, 0.0);

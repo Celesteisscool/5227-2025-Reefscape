@@ -5,31 +5,26 @@
 package frc.robot;
 
 import edu.wpi.first.wpilibj.TimedRobot;
-import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 public class Robot extends TimedRobot {
-  
+  Auto auto = new Auto();
+  Teleop teleop = new Teleop();
+
   @Override
-  public void autonomousInit() {
-  }
+  public void autonomousInit() { auto.autonomousInit(); }
   
   @Override
   public void robotInit() {}
 
   @Override 
-  public void robotPeriodic() {
-    CommandScheduler.getInstance().run(); // Should have read docs :(
-  }
+  public void robotPeriodic() {}
 
   @Override
-  public void autonomousPeriodic() {}
+  public void autonomousPeriodic() { auto.autonomousPeriodic(); }
 
   @Override
-  public void teleopInit() {
-  }
+  public void teleopInit() {}
 
   @Override
-  public void teleopPeriodic() {
-    Teleop.runTeleop();
-  }
+  public void teleopPeriodic() { teleop.teleopPeriodic(); }
 }
