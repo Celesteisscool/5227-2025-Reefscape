@@ -3,6 +3,8 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Teleop {
+	public static boolean ALIGNING = false;
+	public static double joystickAngle = 0.0;
 	public Teleop() {} //This makes compiler happy
 
 	public static void driveFunction() {
@@ -23,7 +25,13 @@ public class Teleop {
 		}
 
 		// Y is left and right.... I guess....
-		if (driverController.getAButton()) { ySpeed = Constants.visionClass.alginToReef(); }
+		ALIGNING = false;
+		if (driverController.getAButton()) { 
+			ySpeed = Constants.visionClass.alginToReef(); 
+			ALIGNING = true;
+		}
+
+		joystickAngle = Math.toDegrees(Math.atan2(driverController.getLeftX(), driverController.getLeftY()));
 		
 		Drivetrain.drive(
 			Constants.slewRateLimiterX.calculate(xSpeed), 

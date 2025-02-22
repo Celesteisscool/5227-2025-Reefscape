@@ -32,7 +32,7 @@ public class Drivetrain {
   private final SwerveModule backLeft   = new SwerveModule(Constants.backLeftIDs[0],   Constants.backLeftIDs[1],   Constants.backLeftIDs[2]);
   private final SwerveModule backRight  = new SwerveModule(Constants.backRightIDs[0],  Constants.backRightIDs[1],  Constants.backRightIDs[2]);
 
-  private final Pigeon2 pigeon2 = new Pigeon2(Constants.gyroID);
+  public static final Pigeon2 pigeon2 = new Pigeon2(Constants.gyroID);
 
   StructArrayPublisher<SwerveModuleState> DesiredState = NetworkTableInstance.getDefault().getStructArrayTopic("Desired State", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> CurrentState = NetworkTableInstance.getDefault().getStructArrayTopic("Current State", SwerveModuleState.struct).publish();
