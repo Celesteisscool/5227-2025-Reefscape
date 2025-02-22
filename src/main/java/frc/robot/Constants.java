@@ -39,4 +39,8 @@ public class Constants {
     public final static PIDController yController =   new PIDController(10.0, 0.0, 0.0);
     public final static PIDController rotController = new PIDController(7.5, 0.0, 0.0); 
 
+
+    // AprilTag Constants
+    public static final int[] validBlueReefIDs = {17, 18, 19, 20, 21, 22};
+    public static final int[] validRedReefIDs  = {6, 7, 8, 9, 10, 11};
 }

@@ -41,7 +41,7 @@ public class SwerveModule {
               
   // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(1, 3);
-  private final SimpleMotorFeedforward rotationFeedforward = new SimpleMotorFeedforward(0.45, 0); 
+  private final SimpleMotorFeedforward rotationFeedforward = new SimpleMotorFeedforward(0.425, .25); 
 
   /**
    * Constructs a SwerveModule with a drive motor, rotation motor, drive encoder and rotation encoder.

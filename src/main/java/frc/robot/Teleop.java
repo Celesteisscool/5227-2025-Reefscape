@@ -22,7 +22,8 @@ public class Teleop {
 			fieldRelative = false; // Forces it to be robot relative
 		}
 
-		if (driverController.getAButton()) { rotSpeed = Constants.visionClass.getCalculatedRotateOutput(); }
+		// Y is left and right.... I guess....
+		if (driverController.getAButton()) { ySpeed = Constants.visionClass.alginToReef(); }
 		
 		Drivetrain.drive(
 			Constants.slewRateLimiterX.calculate(xSpeed), 
