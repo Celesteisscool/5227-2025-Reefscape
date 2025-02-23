@@ -8,6 +8,7 @@ import edu.wpi.first.wpilibj.XboxController;
 public class Elevator {
     private SparkMax elevatorMotor = new SparkMax(25, SparkMax.MotorType.kBrushless);
     private PIDController elevatorPIDController = new PIDController(1, 0, 0);
+    private XboxController elevatorController = Constants.elevatorController;
 
     private double ffS = 0; //PLEASE tune these once the elevator is assembled!!!
     private double ffG = 0;
@@ -39,11 +40,19 @@ public class Elevator {
 
     public void elevatorLogic(XboxController XboxController) {
         // Probably should switch to something more robust... Most likely something command based.
-        if (XboxController.getAButton()) { setPreset1(); }
-        else if (XboxController.getBButton()) { setPreset2(); }
-        else if (XboxController.getXButton()) { moveElevatorToPreset(1); }
-        else if (XboxController.getYButton()) { moveElevatorToPreset(2); }
-        else if (XboxController.getLeftBumperButton()) { moveElevatorManual(XboxController.getRightY()); }
-        else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
+        // if (XboxController.getAButton()) { setPreset1(); }
+        // else if (XboxController.getBButton()) { setPreset2(); }
+        // else if (XboxController.getXButton()) { moveElevatorToPreset(1); }
+        // else if (XboxController.getYButton()) { moveElevatorToPreset(2); }
+        // else if (XboxController.getLeftBumperButton()) { moveElevatorManual(XboxController.getRightY()); }
+        // else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
+        
+        if (elevatorController.getAButton()) {
+            double speed = elevatorController.getRightY() * 3;
+            moveElevatorManual(speed);
+        } else {
+            moveElevatorManual(0);
+        }
+
     }
 }
