@@ -3,12 +3,11 @@ package frc.robot;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.Joystick;
 
 public class Elevator {
     private SparkMax elevatorMotor = new SparkMax(25, SparkMax.MotorType.kBrushless);
     private PIDController elevatorPIDController = new PIDController(1, 0, 0);
-    private XboxController elevatorController = Constants.elevatorController;
 
     private double ffS = 0; //PLEASE tune these once the elevator is assembled!!!
     private double ffG = 0;
@@ -38,7 +37,7 @@ public class Elevator {
         elevatorMotor.setVoltage(setPID + setFeedForward);
     }
 
-    public void elevatorLogic(XboxController XboxController) {
+    public void elevatorLogic(Joystick elevatorController) {
         // Probably should switch to something more robust... Most likely something command based.
         // if (XboxController.getAButton()) { setPreset1(); }
         // else if (XboxController.getBButton()) { setPreset2(); }
@@ -47,8 +46,8 @@ public class Elevator {
         // else if (XboxController.getLeftBumperButton()) { moveElevatorManual(XboxController.getRightY()); }
         // else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
         
-        if (elevatorController.getAButton()) {
-            double speed = elevatorController.getRightY() * 3;
+        if (elevatorController.getRawButton(1)) {
+            double speed = elevatorController.getRawAxis(5) * -3;
             moveElevatorManual(speed);
         } else {
             moveElevatorManual(0);

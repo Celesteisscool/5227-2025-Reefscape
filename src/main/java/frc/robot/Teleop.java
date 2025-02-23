@@ -1,14 +1,16 @@
 package frc.robot;
 
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Teleop {
 	public static boolean ALIGNING = false;
 	public static double joystickAngle = 0.0;
 	public Teleop() {} //This makes compiler happy
+	private static XboxController driverController = Constants.driverController;
+	private static Joystick elevatorController = new Joystick(1);
 
 	public static void driveFunction() {
-		XboxController driverController = Constants.driverController;
 		Drivetrain Drivetrain = Constants.drivetrainClass;
 		
 		double speedLimiter = 1 - (driverController.getRightTriggerAxis() * .5);
@@ -43,5 +45,6 @@ public class Teleop {
 		
 	public void teleopPeriodic() {
 		driveFunction();
+		Constants.elevatorClass.elevatorLogic(elevatorController);
 	}
 }
