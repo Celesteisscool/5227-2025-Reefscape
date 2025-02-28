@@ -20,7 +20,7 @@ public class SwerveModule {
   private static final double moduleMaxAngularVelocity = Constants.maxSwerveSpeed;
   private static final double moduleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
   
-  private final SparkMax driveMotorr; 
+  private final SparkMax driveMotor; 
   private final RelativeEncoder driveEncoder;
   private final SparkMax rotationMotor;
   private final CANcoder rotationEncoder;  
@@ -31,18 +31,14 @@ public class SwerveModule {
   // Desired state
   private SwerveModuleState desiredState;
   // Gains are for example purposes only - must be determined for your own robot!
+  private double rotateP = (7.25 / 12);
   private final ProfiledPIDController rotationPIDController =
-      new ProfiledPIDController(
-          7.25,
-          0,
-          0,
+      new ProfiledPIDController(rotateP,0,0,
           new TrapezoidProfile.Constraints(
               moduleMaxAngularVelocity, moduleMaxAngularAcceleration));
               
   // Gains are for example purposes only - must be determined for your own robot!
   private final SimpleMotorFeedforward driveFeedforward = new SimpleMotorFeedforward(1, 3);
-  private final SimpleMotorFeedforward rotationFeedforward = new SimpleMotorFeedforward(0.425, .25); 
-
   /**
    * Constructs a SwerveModule with a drive motor, rotation motor, drive encoder and rotation encoder.
    *
@@ -54,10 +50,10 @@ public class SwerveModule {
       int driveMotorChannel,
       int rotationMotorChannel,
       int rotationEncoderChannel) {
-    driveMotorr = new SparkMax(driveMotorChannel, MotorType.kBrushless);
+    driveMotor = new SparkMax(driveMotorChannel, MotorType.kBrushless);
     rotationMotor = new SparkMax(rotationMotorChannel, MotorType.kBrushless);
     rotationEncoder = new CANcoder(rotationEncoderChannel);
-    driveEncoder = driveMotorr.getEncoder();
+    driveEncoder = driveMotor.getEncoder();
     
     // Limit the PID Controller's input range between -pi and pi and set the input to be continuous.
     rotationPIDController.enableContinuousInput(-Math.PI, Math.PI);
@@ -67,7 +63,7 @@ public class SwerveModule {
   }
 
   public double getDriveSpeedMetersPerSecond() {
-    double RawRPM =driveMotorr.getEncoder().getVelocity();
+    double RawRPM =driveMotor.getEncoder().getVelocity();
     RawRPM = (RawRPM / 6.12);
     double RawRPS = RawRPM / 60;
     double Conversion = (2 * Math.PI * 0.0508);
@@ -142,9 +138,8 @@ public class SwerveModule {
     // Calculate the rotation motor output from the rotation PID controller.
     final double rotateOutput =
         rotationPIDController.calculate(getRotationEncoderPosition(), desiredStateInput.angle.getRadians());
-    final double calculatedRotationFeedforward = rotationFeedforward.calculate(rotationPIDController.getSetpoint().velocity);
 
-    driveMotorr.setVoltage(driveOutput + calculatedDriveFeedForward);
-    rotationMotor.setVoltage(rotateOutput + calculatedRotationFeedforward);
+    driveMotor.setVoltage(driveOutput + calculatedDriveFeedForward);
+    rotationMotor.set(rotateOutput);
   }
 }

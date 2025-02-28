@@ -3,6 +3,8 @@ package frc.robot;
 import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
 
@@ -10,8 +12,9 @@ public class Elevator {
     private SparkMax elevatorMotor = new SparkMax(25, SparkMax.MotorType.kBrushless);
     private SparkMax armMotor = new SparkMax(28, SparkMax.MotorType.kBrushless);
     private SparkMax flipperMotor = new SparkMax(27, SparkMax.MotorType.kBrushless);
-    private PIDController elevatorPIDController = new PIDController(0.1, 0, 0);
 
+    private Constraints elevatorConstraints = new Constraints(0.3, 0.3);
+    private ProfiledPIDController elevatorPIDController = new ProfiledPIDController(0.1, 0, 0, elevatorConstraints);
     private ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0);
 
     double preset1;
@@ -91,17 +94,15 @@ public class Elevator {
     }
 
     public void moveArmManual(double speed) { armMotor.setVoltage(speed); }
-    public void setPreset1() { preset1 = elevatorMotor.getEncoder().getPosition(); }
-    public void setPreset2() { preset2 = elevatorMotor.getEncoder().getPosition(); }
 
     // This code IS set and forget. NEVER run it once and leave..
     public void moveElevatorToPreset(int Preset) {
         if (Preset == 1) { setpoint = preset1; } 
         else if (Preset == 2) { setpoint = preset2; }
-        elevatorPIDController.setSetpoint(setpoint);
+        elevatorPIDController.setGoal(setpoint);
         
         setPID = (elevatorPIDController.calculate(elevatorMotor.getEncoder().getPosition(), setpoint));
-        setFeedForward = elevatorFeedforward.calculate(elevatorPIDController.getSetpoint());
+        setFeedForward = elevatorFeedforward.calculate(elevatorMotor.getEncoder().getVelocity());
         elevatorMotor.setVoltage(setPID + setFeedForward);
     }
 
@@ -112,30 +113,20 @@ public class Elevator {
     }
 
     public void updatePIDandFF() {
-        double elevatorP;
-        double elevatorI;
-        double elevatorD;
-        double elevatorG;
-        double elevatorS;
-        double elevatorV;
-        double elevatorA;
-        double elevatorMV;
-        double elevatorMA;
-
-        elevatorP = SmartDashboard.getNumber("Elevator P", 0);
-        elevatorI = SmartDashboard.getNumber("Elevator I", 0);
-        elevatorD = SmartDashboard.getNumber("Elevator D", 0);
-        elevatorG = SmartDashboard.getNumber("Elevator G", 0);
-        elevatorS = SmartDashboard.getNumber("Elevator S", 0);
-        elevatorV = SmartDashboard.getNumber("Elevator V", 0);
-        elevatorA = SmartDashboard.getNumber("Elevator A", 0);
-        elevatorA = SmartDashboard.getNumber("Elevator MV", 0);
-        elevatorA = SmartDashboard.getNumber("Elevator MA", 0);
+        double elevatorP = SmartDashboard.getNumber("Elevator P", 0);
+        double elevatorI = SmartDashboard.getNumber("Elevator I", 0);
+        double elevatorD = SmartDashboard.getNumber("Elevator D", 0);
+        double elevatorG = SmartDashboard.getNumber("Elevator G", 0);
+        double elevatorS = SmartDashboard.getNumber("Elevator S", 0);
+        double elevatorV = SmartDashboard.getNumber("Elevator V", 0);
+        double elevatorA = SmartDashboard.getNumber("Elevator A", 0);
+        double elevatorMV = SmartDashboard.getNumber("Elevator MV", 0);
+        double elevatorMA = SmartDashboard.getNumber("Elevator MA", 0);
         elevatorPIDController.setP(elevatorP);
         elevatorPIDController.setI(elevatorI);
         elevatorPIDController.setD(elevatorD);
+        elevatorPIDController.setConstraints(new Constraints(elevatorMV, elevatorMA));
         elevatorFeedforward = new ElevatorFeedforward(elevatorS, elevatorG, elevatorV, elevatorA);
-        
     }
 
 
