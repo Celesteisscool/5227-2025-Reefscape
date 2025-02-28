@@ -10,13 +10,9 @@ public class Elevator {
     private SparkMax elevatorMotor = new SparkMax(25, SparkMax.MotorType.kBrushless);
     private SparkMax armMotor = new SparkMax(28, SparkMax.MotorType.kBrushless);
     private SparkMax flipperMotor = new SparkMax(27, SparkMax.MotorType.kBrushless);
-    private PIDController elevatorPIDController = new PIDController(1, 0, 0);
+    private PIDController elevatorPIDController = new PIDController(0.1, 0, 0);
 
-    private double ffS = 0; //PLEASE tune these once the elevator is assembled!!!
-    private double ffG = 0;
-    private double ffV = 0;
-    private double ffA = 0;
-    private ElevatorFeedforward m_ElevatorFeedforward = new ElevatorFeedforward(ffS, ffG, ffV, ffA);
+    private ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0);
 
     double preset1;
     double preset2;
@@ -105,7 +101,7 @@ public class Elevator {
         elevatorPIDController.setSetpoint(setpoint);
         
         setPID = (elevatorPIDController.calculate(elevatorMotor.getEncoder().getPosition(), setpoint));
-        setFeedForward = m_ElevatorFeedforward.calculate(elevatorPIDController.getSetpoint());
+        setFeedForward = elevatorFeedforward.calculate(elevatorPIDController.getSetpoint());
         elevatorMotor.setVoltage(setPID + setFeedForward);
     }
 
@@ -113,6 +109,33 @@ public class Elevator {
         SmartDashboard.putNumber("Elevator Pose", elevatorMotor.getEncoder().getPosition());
         SmartDashboard.putNumber("Arm Pose", armMotor.getEncoder().getPosition());
         SmartDashboard.putNumber("Flipper Pose", flipperMotor.getEncoder().getPosition());
+    }
+
+    public void updatePIDandFF() {
+        double elevatorP;
+        double elevatorI;
+        double elevatorD;
+        double elevatorG;
+        double elevatorS;
+        double elevatorV;
+        double elevatorA;
+        double elevatorMV;
+        double elevatorMA;
+
+        elevatorP = SmartDashboard.getNumber("Elevator P", 0);
+        elevatorI = SmartDashboard.getNumber("Elevator I", 0);
+        elevatorD = SmartDashboard.getNumber("Elevator D", 0);
+        elevatorG = SmartDashboard.getNumber("Elevator G", 0);
+        elevatorS = SmartDashboard.getNumber("Elevator S", 0);
+        elevatorV = SmartDashboard.getNumber("Elevator V", 0);
+        elevatorA = SmartDashboard.getNumber("Elevator A", 0);
+        elevatorA = SmartDashboard.getNumber("Elevator MV", 0);
+        elevatorA = SmartDashboard.getNumber("Elevator MA", 0);
+        elevatorPIDController.setP(elevatorP);
+        elevatorPIDController.setI(elevatorI);
+        elevatorPIDController.setD(elevatorD);
+        elevatorFeedforward = new ElevatorFeedforward(elevatorS, elevatorG, elevatorV, elevatorA);
+        
     }
 
 
@@ -126,17 +149,21 @@ public class Elevator {
         // else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
         
         if (elevatorController.getRawButton(1)) {
-            double armSpeed = elevatorController.getRawAxis(1) * -2;
+            double armSpeed = elevatorController.getRawAxis(1) * 2;
             double flipperSpeed = (elevatorController.getRawAxis(2) - elevatorController.getRawAxis(3)); 
             moveElevatorManual(elevatorController.getRawAxis(5));
             moveArmManual(armSpeed);
-            moveFlipperManual(flipperSpeed);
+            // moveFlipperManual(flipperSpeed);
         } else if (elevatorController.getRawButton(2)) {
-            moveFlipperPoses(elevatorController);
+            // moveFlipperPoses(elevatorController);
         } else {
             moveElevatorManual(0);
             moveArmManual(0);
             moveFlipperManual(0);
+        }
+
+        if (elevatorController.getRawButton(4)) {
+            updatePIDandFF();
         }
 
         reportPose();
