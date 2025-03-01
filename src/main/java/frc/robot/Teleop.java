@@ -10,13 +10,22 @@ public class Teleop {
 	private static XboxController driverController = Constants.driverController;
 	private static Joystick elevatorController = new Joystick(1);
 
+	public static double deadzones(double input) {
+		if (Math.abs(input) < 0.05) {
+			return 0;
+		} else {
+			return input;
+		}
+	}
+
 	public static void driveFunction() {
 		Drivetrain Drivetrain = Constants.drivetrainClass;
 		
+
 		double speedLimiter = 1 - (driverController.getRightTriggerAxis() * .5);
-		double xSpeed = (driverController.getLeftY()* Constants.maxSwerveSpeed * speedLimiter);
-		double ySpeed = (driverController.getLeftX() * Constants.maxSwerveSpeed * speedLimiter);
-		double rotSpeed = (driverController.getRightX() * Constants.maxSwerveAngularSpeed * speedLimiter) * -1; //invert so that turning is more natural
+		double xSpeed = (deadzones(driverController.getLeftY())* Constants.maxSwerveSpeed * speedLimiter);
+		double ySpeed = (deadzones(driverController.getLeftX()) * Constants.maxSwerveSpeed * speedLimiter);
+		double rotSpeed = (deadzones(driverController.getRightX()) * Constants.maxSwerveAngularSpeed * speedLimiter) * -1; //invert so that turning is more natural
 		int POVangle = driverController.getPOV(); 
 		boolean fieldRelative = true;
 		if (POVangle != -1) { // Drives with the DPad instead of the joystick for perfect 45° angles

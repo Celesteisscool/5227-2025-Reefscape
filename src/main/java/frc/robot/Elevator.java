@@ -1,67 +1,89 @@
 package frc.robot;
 
+import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
-import edu.wpi.first.math.controller.ElevatorFeedforward;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.config.SparkMaxConfig;
+
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
 
 public class Elevator {
     private SparkMax elevatorMotor = new SparkMax(25, SparkMax.MotorType.kBrushless);
-    private SparkMax armMotor = new SparkMax(28, SparkMax.MotorType.kBrushless);
     private SparkMax flipperMotor = new SparkMax(27, SparkMax.MotorType.kBrushless);
-
-    private Constraints elevatorConstraints = new Constraints(0.3, 0.3);
-    private ProfiledPIDController elevatorPIDController = new ProfiledPIDController(0.1, 0, 0, elevatorConstraints);
-    private ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0);
-    private TrapezoidProfile trapezoidProfile = new TrapezoidProfile(elevatorConstraints);
+    
+    private SparkMax armMotor = new SparkMax(28, SparkMax.MotorType.kBrushless);
+    private SparkClosedLoopController armMotorController = armMotor.getClosedLoopController();
 
     double preset1;
     double preset2;
     double setpointDouble;
-    double setPID;
-    double setFeedForward;
+    double presetMax;
 
     double elevatorMaxHeight = 160;
     double elevatorMinHeight = 0.5;
-    double elevatorSlowSpotHigh = elevatorMaxHeight-15;
-    double elevatorSlowSpotLow = elevatorMinHeight+15;
+    double slowZone = 15;
 
     double flipperSetPose;
     double flipperPoseMin = -12.5;
     double flipperPoseMax = 0;
 
-    TrapezoidProfile.State setpointState = new TrapezoidProfile.State(0, 0);
-    TrapezoidProfile.State goalState = new TrapezoidProfile.State(0, 0);
+    double maxArmPose = 10;
 
-    public Elevator() {
+    public Elevator() { // Zeros Everything
         elevatorMotor.getEncoder().setPosition(0);
         armMotor.getEncoder().setPosition(0);
         flipperMotor.getEncoder().setPosition(0);
+        
     }
 
-    public void moveElevatorManual(double speed, boolean driverMode) { 
+    public void moveElevatorWithSaftey(double speed, boolean manualMode) { 
         speed = Math.min(1, Math.max(speed, -1)); // Caps it just incase
+        speed *= -1;
+        
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
-        if ((elevatorPose >= elevatorMaxHeight) && (speed < 0)) {
+
+        if ((elevatorPose >= elevatorMaxHeight) && (speed > 0)) {
             speed = 0; // Stops if we are higher then max height
         } 
-        if ((elevatorPose <= elevatorMinHeight) && (speed > 0)) {
+        if ((elevatorPose <= elevatorMinHeight) && (speed < 0)) {
             speed = 0; // Stops if we are lower then max height
         } 
 
-        if ((elevatorPose > elevatorSlowSpotHigh) && driverMode) {
-            speed *= 0.5;
-        } else if ((elevatorPose < elevatorSlowSpotLow) && driverMode) {
-            speed *= 0.5;
-        }
-        if (driverMode) { speed *= -4;}
-        else {speed *= -1;}
+        if (elevatorPose > (elevatorMaxHeight - slowZone)) {
+            speed *= 0.5; 
+        } else if (elevatorPose < (elevatorMinHeight + slowZone)) {
+            speed *= 0.5; 
+        }        
+        speed *= 4;
         elevatorMotor.setVoltage(speed);
     }
+
+    // This code IS set and forget. NEVER run it once and leave..
+    public void moveElevatorToPreset(String Preset) {
+        double speed = 0;
+        if (Preset == "L4") { setpointDouble = 1; } 
+        else if (Preset == "L3") { setpointDouble = 0.5; } 
+        else if (Preset == "L2") { setpointDouble = -1; } 
+        else if (Preset == "L1") { setpointDouble = -1; }
+
+        speed = setpointDouble *-1;
+
+        moveElevatorWithSaftey(speed, false); 
+    }
+
+
+    public void moveArmToPreset(String Preset) {
+        double armPose = armMotor.getEncoder().getPosition();
+        
+
+        if (Preset == "L4") { setpointDouble = 1; }
+        if (Preset == "L4") { setpointDouble = 0.75; }
+        setpointDouble *= maxArmPose;
+
+        armMotorController.setReference(armPose, ControlType.kPosition);
+    }
+
 
     public void moveFlipperPoses(Joystick elevatorController) {
         var POV = elevatorController.getPOV();
@@ -80,8 +102,8 @@ public class Elevator {
             speed = 1.0;
         }
         moveFlipperManual(speed);
-    }
 
+    }
 
     public void moveFlipperManual(double speed) { 
         
@@ -98,26 +120,8 @@ public class Elevator {
         
     }
 
-    public void moveArmManual(double speed) { armMotor.setVoltage(speed); }
 
-    // This code IS set and forget. NEVER run it once and leave..
-    public void moveElevatorToPreset(int Preset) {
-        if (Preset == 0) { setpointDouble = 0.25; } 
-        else if (Preset == 1) { setpointDouble = 0.75; }
-        setpointDouble *= elevatorMaxHeight;
-
-        elevatorPIDController.setGoal(setpointDouble);
-
-        
-        
-        double elevatorPose = elevatorMotor.getEncoder().getPosition();
-        setPID = (elevatorPIDController.calculate(elevatorPose));
-        setFeedForward = elevatorFeedforward.calculate(elevatorMotor.getEncoder().getVelocity());
-        moveElevatorManual((setPID + setFeedForward)*-1, false);
-
-        SmartDashboard.putNumber("Elevator Pose", elevatorMotor.getEncoder().getPosition());
-        SmartDashboard.putNumber("Desired Pose", elevatorPIDController.getGoal().position);
-    }
+    
 
     public void reportPose() {
         SmartDashboard.putNumber("Elevator Pose", elevatorMotor.getEncoder().getPosition());
@@ -125,23 +129,7 @@ public class Elevator {
         SmartDashboard.putNumber("Flipper Pose", flipperMotor.getEncoder().getPosition());
     }
 
-    public void updatePIDandFF() {
-        double elevatorP =  0;
-        double elevatorI =  0;
-        double elevatorD =  0;
-        double elevatorG =  0.25; //Locked In
-        double elevatorS =  0;
-        double elevatorV =  0;
-        double elevatorA =  0;
-        double elevatorMV = 0.75;
-        double elevatorMA = 0.75;
-
-        elevatorPIDController.setP(elevatorP);
-        elevatorPIDController.setI(elevatorI);
-        elevatorPIDController.setD(elevatorD);
-        elevatorPIDController.setConstraints(new Constraints(elevatorMV, elevatorMA));
-        elevatorFeedforward = new ElevatorFeedforward(elevatorS, elevatorG, elevatorV, elevatorA);
-    }
+    
 
 
     public void elevatorLogic(Joystick elevatorController) {
@@ -153,26 +141,26 @@ public class Elevator {
         // else if (XboxController.getLeftBumperButton()) { moveElevatorManual(XboxController.getRightY()); }
         // else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
         
-        if (elevatorController.getRawButton(1)) {
+        if (elevatorController.getRawButton(5)) {
             double armSpeed = elevatorController.getRawAxis(1) * 2;
             double flipperSpeed = (elevatorController.getRawAxis(2) - elevatorController.getRawAxis(3)); 
-            moveElevatorManual(elevatorController.getRawAxis(5), true);
-            moveArmManual(armSpeed);
+            moveElevatorWithSaftey(elevatorController.getRawAxis(5), true);
             moveFlipperManual(flipperSpeed);
+
+        }  else if (elevatorController.getRawButton(4)) {
+            moveElevatorToPreset("L4"); // L4
+            moveArmToPreset("L4");
         }  else if (elevatorController.getRawButton(2)) {
-            moveElevatorToPreset(0);
-        }  else if (elevatorController.getRawButton(3)) {
-            moveElevatorToPreset(1);
+            moveElevatorToPreset("L3"); // L3
+            moveArmToPreset("L3");
+        } else if (elevatorController.getRawButton(1)) {
+            moveElevatorToPreset("L2"); // L2
+            moveArmToPreset("L2");
         }
 
         else {
-            moveElevatorManual(0, true);
-            moveArmManual(0);
+            moveElevatorWithSaftey(0, true);
             moveFlipperManual(0);
-        }
-
-        if (elevatorController.getRawButton(4)) {
-            updatePIDandFF();
         }
 
         reportPose();
