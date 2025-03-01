@@ -4,6 +4,7 @@ import com.revrobotics.spark.SparkMax;
 import edu.wpi.first.math.controller.ElevatorFeedforward;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.trajectory.TrapezoidProfile.Constraints;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
@@ -16,10 +17,11 @@ public class Elevator {
     private Constraints elevatorConstraints = new Constraints(0.3, 0.3);
     private ProfiledPIDController elevatorPIDController = new ProfiledPIDController(0.1, 0, 0, elevatorConstraints);
     private ElevatorFeedforward elevatorFeedforward = new ElevatorFeedforward(0, 0, 0);
+    private TrapezoidProfile trapezoidProfile = new TrapezoidProfile(elevatorConstraints);
 
     double preset1;
     double preset2;
-    double setpoint;
+    double setpointDouble;
     double setPID;
     double setFeedForward;
 
@@ -32,13 +34,16 @@ public class Elevator {
     double flipperPoseMin = -12.5;
     double flipperPoseMax = 0;
 
+    TrapezoidProfile.State setpointState = new TrapezoidProfile.State(0, 0);
+    TrapezoidProfile.State goalState = new TrapezoidProfile.State(0, 0);
+
     public Elevator() {
         elevatorMotor.getEncoder().setPosition(0);
         armMotor.getEncoder().setPosition(0);
         flipperMotor.getEncoder().setPosition(0);
     }
 
-    public void moveElevatorManual(double speed) { 
+    public void moveElevatorManual(double speed, boolean driverMode) { 
         speed = Math.min(1, Math.max(speed, -1)); // Caps it just incase
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
         if ((elevatorPose >= elevatorMaxHeight) && (speed < 0)) {
@@ -48,12 +53,14 @@ public class Elevator {
             speed = 0; // Stops if we are lower then max height
         } 
 
-        if (elevatorPose > elevatorSlowSpotHigh) {
+        if ((elevatorPose > elevatorSlowSpotHigh) && driverMode) {
             speed *= 0.5;
-        } else if (elevatorPose < elevatorSlowSpotLow) {
+        } else if ((elevatorPose < elevatorSlowSpotLow) && driverMode) {
             speed *= 0.5;
         }
-        elevatorMotor.setVoltage(speed * -4);
+        if (driverMode) { speed *= -4;}
+        else {speed *= -1;}
+        elevatorMotor.setVoltage(speed);
     }
 
     public void moveFlipperPoses(Joystick elevatorController) {
@@ -72,9 +79,7 @@ public class Elevator {
         } else if (flipperSetPose < flipperPose) {
             speed = 1.0;
         }
-
         moveFlipperManual(speed);
-
     }
 
 
@@ -97,13 +102,21 @@ public class Elevator {
 
     // This code IS set and forget. NEVER run it once and leave..
     public void moveElevatorToPreset(int Preset) {
-        if (Preset == 1) { setpoint = preset1; } 
-        else if (Preset == 2) { setpoint = preset2; }
-        elevatorPIDController.setGoal(setpoint);
+        if (Preset == 0) { setpointDouble = 0.25; } 
+        else if (Preset == 1) { setpointDouble = 0.75; }
+        setpointDouble *= elevatorMaxHeight;
+
+        elevatorPIDController.setGoal(setpointDouble);
+
         
-        setPID = (elevatorPIDController.calculate(elevatorMotor.getEncoder().getPosition(), setpoint));
+        
+        double elevatorPose = elevatorMotor.getEncoder().getPosition();
+        setPID = (elevatorPIDController.calculate(elevatorPose));
         setFeedForward = elevatorFeedforward.calculate(elevatorMotor.getEncoder().getVelocity());
-        elevatorMotor.setVoltage(setPID + setFeedForward);
+        moveElevatorManual((setPID + setFeedForward)*-1, false);
+
+        SmartDashboard.putNumber("Elevator Pose", elevatorMotor.getEncoder().getPosition());
+        SmartDashboard.putNumber("Desired Pose", elevatorPIDController.getGoal().position);
     }
 
     public void reportPose() {
@@ -113,15 +126,16 @@ public class Elevator {
     }
 
     public void updatePIDandFF() {
-        double elevatorP = SmartDashboard.getNumber("Elevator P", 0);
-        double elevatorI = SmartDashboard.getNumber("Elevator I", 0);
-        double elevatorD = SmartDashboard.getNumber("Elevator D", 0);
-        double elevatorG = SmartDashboard.getNumber("Elevator G", 0);
-        double elevatorS = SmartDashboard.getNumber("Elevator S", 0);
-        double elevatorV = SmartDashboard.getNumber("Elevator V", 0);
-        double elevatorA = SmartDashboard.getNumber("Elevator A", 0);
-        double elevatorMV = SmartDashboard.getNumber("Elevator MV", 0);
-        double elevatorMA = SmartDashboard.getNumber("Elevator MA", 0);
+        double elevatorP =  0;
+        double elevatorI =  0;
+        double elevatorD =  0;
+        double elevatorG =  0.25; //Locked In
+        double elevatorS =  0;
+        double elevatorV =  0;
+        double elevatorA =  0;
+        double elevatorMV = 0.75;
+        double elevatorMA = 0.75;
+
         elevatorPIDController.setP(elevatorP);
         elevatorPIDController.setI(elevatorI);
         elevatorPIDController.setD(elevatorD);
@@ -142,13 +156,17 @@ public class Elevator {
         if (elevatorController.getRawButton(1)) {
             double armSpeed = elevatorController.getRawAxis(1) * 2;
             double flipperSpeed = (elevatorController.getRawAxis(2) - elevatorController.getRawAxis(3)); 
-            moveElevatorManual(elevatorController.getRawAxis(5));
+            moveElevatorManual(elevatorController.getRawAxis(5), true);
             moveArmManual(armSpeed);
-            // moveFlipperManual(flipperSpeed);
-        } else if (elevatorController.getRawButton(2)) {
-            // moveFlipperPoses(elevatorController);
-        } else {
-            moveElevatorManual(0);
+            moveFlipperManual(flipperSpeed);
+        }  else if (elevatorController.getRawButton(2)) {
+            moveElevatorToPreset(0);
+        }  else if (elevatorController.getRawButton(3)) {
+            moveElevatorToPreset(1);
+        }
+
+        else {
+            moveElevatorManual(0, true);
             moveArmManual(0);
             moveFlipperManual(0);
         }

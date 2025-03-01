@@ -11,6 +11,8 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import com.ctre.phoenix6.hardware.CANcoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.spark.SparkMax;
@@ -141,5 +143,13 @@ public class SwerveModule {
 
     driveMotor.setVoltage(driveOutput + calculatedDriveFeedForward);
     rotationMotor.set(rotateOutput);
+  }
+
+
+  public void setPID() {
+    double P = SmartDashboard.getNumber("Swerve P", rotateP);
+    double I = SmartDashboard.getNumber("Swerve I", 0);
+    double D = SmartDashboard.getNumber("Swerve D", 0);
+    rotationPIDController.setPID(P, I, D);
   }
 }

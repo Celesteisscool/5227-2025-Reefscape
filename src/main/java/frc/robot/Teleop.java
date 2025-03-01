@@ -46,5 +46,9 @@ public class Teleop {
 	public void teleopPeriodic() {
 		driveFunction();
 		Constants.elevatorClass.elevatorLogic(elevatorController);
+
+		if (driverController.getYButton()) {
+			Constants.drivetrainClass.setPID();
+		}
 	}
 }

@@ -124,4 +124,11 @@ public class Drivetrain {
   public void resetOdometry(Pose2d pose) {
     odometry.resetPose(pose);
   }
+
+  public void setPID() {
+    frontLeft.setPID();
+    frontRight.setPID();
+    backLeft.setPID();
+    backRight.setPID();
+  }
 }

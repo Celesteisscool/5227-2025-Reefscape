@@ -20,6 +20,7 @@ public class Robot extends TimedRobot {
   @Override
   public void disabledInit() {
     LEDMODE = 0;
+    Constants.elevatorClass.updatePIDandFF();
   }
 
   @Override 
