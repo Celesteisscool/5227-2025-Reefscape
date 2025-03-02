@@ -6,6 +6,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.wpilibj.Joystick;
+import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
 
 public class Elevator {
@@ -28,16 +29,16 @@ public class Elevator {
     double flipperPoseMin = -12.5;
     double flipperPoseMax = 0;
 
-    double maxArmPose = 10;
+    double minArmPose = -30;
+    double maxArmPose = -0.5;
 
     public Elevator() { // Zeros Everything
         elevatorMotor.getEncoder().setPosition(0);
         armMotor.getEncoder().setPosition(0);
         flipperMotor.getEncoder().setPosition(0);
-        
     }
 
-    public void moveElevatorWithSaftey(double speed, boolean manualMode) { 
+    public void moveElevatorWithSaftey(double speed, boolean slowZones) { 
         speed = Math.min(1, Math.max(speed, -1)); // Caps it just incase
         speed *= -1;
         
@@ -50,9 +51,9 @@ public class Elevator {
             speed = 0; // Stops if we are lower then max height
         } 
 
-        if (elevatorPose > (elevatorMaxHeight - slowZone)) {
+        if (elevatorPose > (elevatorMaxHeight - slowZone) && slowZones) {
             speed *= 0.5; 
-        } else if (elevatorPose < (elevatorMinHeight + slowZone)) {
+        } else if (elevatorPose < (elevatorMinHeight + slowZone) && slowZones) {
             speed *= 0.5; 
         }        
         speed *= 4;
@@ -69,7 +70,19 @@ public class Elevator {
 
         speed = setpointDouble *-1;
 
-        moveElevatorWithSaftey(speed, false); 
+        moveElevatorWithSaftey(speed, true); 
+    }
+
+    private void moveArmManual(double speed) {
+        double armPose = (armMotor.getEncoder().getPosition());
+        
+        if ((speed < 0) && (armPose < minArmPose)) {
+            speed = 0;
+        }
+        if ((speed > 0) && (armPose > maxArmPose)) {
+            speed = 0;
+        }
+        armMotor.setVoltage(speed * 2);
     }
 
 
@@ -78,8 +91,7 @@ public class Elevator {
         
 
         if (Preset == "L4") { setpointDouble = 1; }
-        if (Preset == "L4") { setpointDouble = 0.75; }
-        setpointDouble *= maxArmPose;
+        setpointDouble *= minArmPose;
 
         armMotorController.setReference(armPose, ControlType.kPosition);
     }
@@ -129,39 +141,68 @@ public class Elevator {
         SmartDashboard.putNumber("Flipper Pose", flipperMotor.getEncoder().getPosition());
     }
 
+    int grabSteps = 0;
+    public void grabSequence(Joystick elevatorController) {
+        var elevatorPose = elevatorMotor.getEncoder().getPosition();
+        var armPose = armMotor.getEncoder().getPosition();
+        if ((grabSteps == 0) && (elevatorPose < 5) && (armPose < -5)) {
+            grabSteps = 1;
+        } 
+        else if (grabSteps == 1) {
+            moveElevatorWithSaftey(-0.25, false);
+            moveArmManual(0);
+            if (elevatorPose > (slowZone+7.5)) { grabSteps = 2; }
+        } 
+        else if (grabSteps == 2) {
+            moveElevatorWithSaftey(0, false);
+            moveArmManual(0.35);
+            if (armPose > -1) { grabSteps = 3;}
+        }
+        else if (grabSteps == 3) {
+            moveElevatorWithSaftey(0.25, false);
+            moveArmManual(0);
+            if (elevatorPose < (0.25)) { grabSteps = 4;}
+        } 
+        else if (grabSteps == 4) {
+            moveElevatorWithSaftey(0, true);
+            moveArmManual(0);
+            elevatorController.setRumble(RumbleType.kLeftRumble, 0.1);
+        } else {
+            moveArmManual(0);
+            moveElevatorWithSaftey(0, true);
+        }
+    }
     
 
 
     public void elevatorLogic(Joystick elevatorController) {
-        // Probably should switch to something more robust... Most likely something command based.
-        // if (XboxController.getAButton()) { setPreset1(); }
-        // else if (XboxController.getBButton()) { setPreset2(); }
-        // else if (XboxController.getXButton()) { moveElevatorToPreset(1); }
-        // else if (XboxController.getYButton()) { moveElevatorToPreset(2); }
-        // else if (XboxController.getLeftBumperButton()) { moveElevatorManual(XboxController.getRightY()); }
-        // else { moveElevatorManual(0); } // Prevents elevator from moving when not instructed.
-        
         if (elevatorController.getRawButton(5)) {
-            double armSpeed = elevatorController.getRawAxis(1) * 2;
             double flipperSpeed = (elevatorController.getRawAxis(2) - elevatorController.getRawAxis(3)); 
             moveElevatorWithSaftey(elevatorController.getRawAxis(5), true);
             moveFlipperManual(flipperSpeed);
+            moveArmManual(elevatorController.getRawAxis(1));
 
         }  else if (elevatorController.getRawButton(4)) {
             moveElevatorToPreset("L4"); // L4
-            moveArmToPreset("L4");
+            // moveArmToPreset("L4");
         }  else if (elevatorController.getRawButton(2)) {
             moveElevatorToPreset("L3"); // L3
-            moveArmToPreset("L3");
+            // moveArmToPreset("L3");
         } else if (elevatorController.getRawButton(1)) {
             moveElevatorToPreset("L2"); // L2
-            moveArmToPreset("L2");
+            // moveArmToPreset("L2");
+        } else if (elevatorController.getRawButton(6)) {
+            grabSequence(elevatorController);
         }
 
         else {
             moveElevatorWithSaftey(0, true);
             moveFlipperManual(0);
+            moveArmManual(0);
+            grabSteps = 0;
         }
+
+        
 
         reportPose();
 

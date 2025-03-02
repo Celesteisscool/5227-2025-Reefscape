@@ -22,7 +22,7 @@ public class Teleop {
 		Drivetrain Drivetrain = Constants.drivetrainClass;
 		
 
-		double speedLimiter = 1 - (driverController.getRightTriggerAxis() * .5);
+		double speedLimiter = ((driverController.getRightTriggerAxis())) * .25;
 		double xSpeed = (deadzones(driverController.getLeftY())* Constants.maxSwerveSpeed * speedLimiter);
 		double ySpeed = (deadzones(driverController.getLeftX()) * Constants.maxSwerveSpeed * speedLimiter);
 		double rotSpeed = (deadzones(driverController.getRightX()) * Constants.maxSwerveAngularSpeed * speedLimiter) * -1; //invert so that turning is more natural
@@ -30,8 +30,8 @@ public class Teleop {
 		boolean fieldRelative = true;
 		if (POVangle != -1) { // Drives with the DPad instead of the joystick for perfect 45° angles
 			var POVRadians = Math.toRadians(POVangle);
-			xSpeed = Math.cos(POVRadians) * 0.25;
-			ySpeed = Math.sin(POVRadians) * 0.25;
+			xSpeed = Math.cos(POVRadians) * -0.25 * speedLimiter;
+			ySpeed = Math.sin(POVRadians) * 0.25 * speedLimiter;
 			fieldRelative = false; // Forces it to be robot relative
 		}
 
