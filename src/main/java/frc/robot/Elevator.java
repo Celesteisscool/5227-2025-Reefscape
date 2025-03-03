@@ -3,10 +3,7 @@ package frc.robot;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.config.SparkMaxConfig;
-
 import edu.wpi.first.wpilibj.Joystick;
-import edu.wpi.first.wpilibj.GenericHID.RumbleType;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
 
 public class Elevator {
@@ -38,7 +35,7 @@ public class Elevator {
         flipperMotor.getEncoder().setPosition(0);
     }
 
-    public void moveElevatorWithSaftey(double speed, boolean slowZones) { 
+    public void moveElevatorWithSafety(double speed, boolean slowZones) { 
         speed = Math.min(1, Math.max(speed, -1)); // Caps it just incase
         speed *= -1;
         
@@ -58,19 +55,6 @@ public class Elevator {
         }        
         speed *= 4;
         elevatorMotor.setVoltage(speed);
-    }
-
-    // This code IS set and forget. NEVER run it once and leave..
-    public void moveElevatorToPreset(String Preset) {
-        double speed = 0;
-        if (Preset == "L4") { setpointDouble = 1; } 
-        else if (Preset == "L3") { setpointDouble = 0.5; } 
-        else if (Preset == "L2") { setpointDouble = -1; } 
-        else if (Preset == "L1") { setpointDouble = -1; }
-
-        speed = setpointDouble *-1;
-
-        moveElevatorWithSaftey(speed, true); 
     }
 
     private void moveArmManual(double speed) {
@@ -141,65 +125,104 @@ public class Elevator {
         SmartDashboard.putNumber("Flipper Pose", flipperMotor.getEncoder().getPosition());
     }
 
-    int grabSteps = 0;
-    public void grabSequence(Joystick elevatorController) {
+
+
+    int L4Steps = 0; // THANK YOU ZEKE YOU ARE THE BEST <3
+
+    public void grabSequence() {
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
         var armPose = armMotor.getEncoder().getPosition();
-        if ((grabSteps == 0) && (elevatorPose < 5) && (armPose < -5)) {
-            grabSteps = 1;
-        } 
-        else if (grabSteps == 1) {
-            moveElevatorWithSaftey(-0.25, false);
-            moveArmManual(0);
-            if (elevatorPose > (slowZone+7.5)) { grabSteps = 2; }
-        } 
-        else if (grabSteps == 2) {
-            moveElevatorWithSaftey(0, false);
-            moveArmManual(0.35);
-            if (armPose > -1) { grabSteps = 3;}
-        }
-        else if (grabSteps == 3) {
-            moveElevatorWithSaftey(0.25, false);
-            moveArmManual(0);
-            if (elevatorPose < (0.25)) { grabSteps = 4;}
-        } 
-        else if (grabSteps == 4) {
-            moveElevatorWithSaftey(0, true);
-            moveArmManual(0);
-            elevatorController.setRumble(RumbleType.kLeftRumble, 0.1);
-        } else {
-            moveArmManual(0);
-            moveElevatorWithSaftey(0, true);
+        double elevatorPresetSpeed = 0.25; // increase this a bit its really slow rn
+        double armPresetSpeed = 0.35;
+
+        switch (L4Steps) {
+            case 0:
+                if ((elevatorPose < 5) && (armPose < -5)) { L4Steps = 1; }
+                break;
+            case 1:
+                moveElevatorWithSafety(-elevatorPresetSpeed, false);
+                moveArmManual(0);
+                if (elevatorPose > (slowZone + 7.5)) { L4Steps = 2; }
+                break;
+            case 2:
+                moveElevatorWithSafety(0, false);
+                moveArmManual(armPresetSpeed);
+                if (armPose > -1) { L4Steps = 3; }
+                break;
+            case 3:
+                moveElevatorWithSafety(elevatorPresetSpeed, false);
+                moveArmManual(0);
+                if (elevatorPose < 0.25) { L4Steps = 4; }
+                break;
+            case 4:
+                moveElevatorWithSafety(0, false);
+                moveArmManual(0);
+                break;
+            default:
+                moveArmManual(0);
+                moveElevatorWithSafety(0, false);
+                break;
         }
     }
-    
+
+    public void moveL4() {
+        var elevatorPose = elevatorMotor.getEncoder().getPosition();
+        var armPose = armMotor.getEncoder().getPosition();
+        double elevatorPresetSpeed = 0.25; // bump this once we know it works
+        double armPresetSpeed = 0.35;
+
+        double L4ElevatorPose = elevatorMaxHeight - 1;
+        double L4ArmPose = minArmPose;
+
+        switch (L4Steps) {
+            case 0:
+                if ((elevatorPose < 5) && (armPose > -1)) { L4Steps = 1; } // Clamped on piece
+                break;
+            case 1:
+                moveElevatorWithSafety(-elevatorPresetSpeed, true); // Moves upward
+                moveArmManual(0);
+                if (elevatorPose > L4ElevatorPose) { L4Steps = 2; }
+                break;
+            case 2:
+                moveElevatorWithSafety(0, false);
+                moveArmManual(-armPresetSpeed); // Sends arm outward
+                if (armPose < L4ArmPose) { L4Steps = 3; }
+                break;
+            case 3:
+                moveElevatorWithSafety(0, false);
+                moveArmManual(0);
+                break;
+            default:
+                moveArmManual(0);
+                moveElevatorWithSafety(0, false);
+                break;
+        }
+    }
+
 
 
     public void elevatorLogic(Joystick elevatorController) {
         if (elevatorController.getRawButton(5)) {
             double flipperSpeed = (elevatorController.getRawAxis(2) - elevatorController.getRawAxis(3)); 
-            moveElevatorWithSaftey(elevatorController.getRawAxis(5), true);
+            moveElevatorWithSafety(elevatorController.getRawAxis(5), true);
             moveFlipperManual(flipperSpeed);
             moveArmManual(elevatorController.getRawAxis(1));
 
-        }  else if (elevatorController.getRawButton(4)) {
-            moveElevatorToPreset("L4"); // L4
-            // moveArmToPreset("L4");
-        }  else if (elevatorController.getRawButton(2)) {
-            moveElevatorToPreset("L3"); // L3
-            // moveArmToPreset("L3");
-        } else if (elevatorController.getRawButton(1)) {
-            moveElevatorToPreset("L2"); // L2
-            // moveArmToPreset("L2");
-        } else if (elevatorController.getRawButton(6)) {
-            grabSequence(elevatorController);
+        }  else if (elevatorController.getRawButton(4)) { // Y
+            moveL4();
+        }  else if (elevatorController.getRawButton(2)) { //B
+            // L3
+        } else if (elevatorController.getRawButton(1)) { // A 
+            // L2
+        } else if (elevatorController.getRawButton(6)) { // RB (Change to X)
+            grabSequence();
         }
 
         else {
-            moveElevatorWithSaftey(0, true);
+            moveElevatorWithSafety(0, true);
             moveFlipperManual(0);
             moveArmManual(0);
-            grabSteps = 0;
+            L4Steps = 0;
         }
 
         
