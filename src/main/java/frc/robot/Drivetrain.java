@@ -70,8 +70,10 @@ public class Drivetrain {
    */
   public void drive(
       double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-    var swerveModuleStates = 
-    kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d()));
+    
+    SwerveModuleState[] swerveModuleStates;
+    if (fieldRelative) { swerveModuleStates = kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d())); }
+    else { swerveModuleStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(xSpeed, ySpeed, rot)); }
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
     setStates(swerveModuleStates);
     updateDashboard();

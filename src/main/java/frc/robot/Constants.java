@@ -3,7 +3,6 @@ package frc.robot;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Constants {
@@ -32,8 +31,8 @@ public class Constants {
     public static Elevator elevatorClass = new Elevator();
     public static final Vision visionClass = new Vision();
 
-    public static XboxController driverController = new XboxController(0);
-    public static Joystick elevatorController = new Joystick(1);
+    public static XboxController driverController   = new XboxController(0);
+    public static XboxController elevatorController = new XboxController(1);
 
     //Auto Constants 
     public final static PIDController xController =   new PIDController(10.0, 0.0, 0.0);
