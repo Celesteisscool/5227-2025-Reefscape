@@ -33,7 +33,7 @@ public class SwerveModule {
   // Desired state
   private SwerveModuleState desiredState;
   // Gains are for example purposes only - must be determined for your own robot!
-  private double rotateP = 0.7;
+  private double rotateP = 0.8;
   private final ProfiledPIDController rotationPIDController =
       new ProfiledPIDController(rotateP,0,0,
           new TrapezoidProfile.Constraints(

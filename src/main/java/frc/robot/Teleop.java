@@ -19,21 +19,23 @@ public class Teleop {
 	
 		public static void driveFunction(double slow) {
 			Drivetrain Drivetrain = Constants.drivetrainClass;
-			double speedLimiter = 0.95;
+			double translateSpeedLimiter = 0.95;
+			double rotateSpeedLimiter = 0.95;
 	
 			if (driverController.getRightTriggerAxis() > 0.5) {
-				speedLimiter *= 0.25;
+				translateSpeedLimiter *= 0.25;
+				rotateSpeedLimiter *= 0.1;
 			} 
 	
-			double xSpeed = (deadzones(driverController.getLeftY())* Constants.maxSwerveSpeed * speedLimiter * slow);
-			double ySpeed = (deadzones(driverController.getLeftX()) * Constants.maxSwerveSpeed * speedLimiter * slow);
-			double rotSpeed = (deadzones(driverController.getRightX()) * Constants.maxSwerveAngularSpeed * speedLimiter * slow); 
+			double xSpeed = (deadzones(driverController.getLeftY())* Constants.maxSwerveSpeed * translateSpeedLimiter * slow);
+			double ySpeed = (deadzones(driverController.getLeftX()) * Constants.maxSwerveSpeed * translateSpeedLimiter * slow);
+			double rotSpeed = (deadzones(driverController.getRightX()) * Constants.maxSwerveAngularSpeed * rotateSpeedLimiter * slow); 
 			int POVangle = driverController.getPOV(); 
 			
 			if (POVangle != -1) { // Drives with the DPad instead of the joystick for perfect 45° angles
 				var POVRadians = Math.toRadians(POVangle);
-				xSpeed = Math.cos(POVRadians) * -0.25 * speedLimiter;
-				ySpeed = Math.sin(POVRadians) * 0.25 * speedLimiter;
+				xSpeed = Math.cos(POVRadians) * -0.25 * translateSpeedLimiter;
+				ySpeed = Math.sin(POVRadians) * 0.25 * translateSpeedLimiter;
 				fieldRelative = false; // Forces it to be robot relative
 			} else {
 				if ((xSpeed > 0) || (ySpeed > 0) || (rotSpeed > 0)) {fieldRelative = true;}

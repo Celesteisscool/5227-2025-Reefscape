@@ -308,7 +308,20 @@ public class Elevator {
 
     public void elevatorLogic() {
         elevatorController = Constants.elevatorController;
-        if (elevatorController.getLeftBumperButton()) {
+        // boolean lockElevator = (
+        // (Math.abs(elevatorController.getLeftY())            > 0.1) || 
+        // (Math.abs(elevatorController.getRightY())           > 0.1) || 
+        // (Math.abs(elevatorController.getLeftTriggerAxis())  > 0.1) || 
+        // (Math.abs(elevatorController.getRightTriggerAxis()) > 0.1));
+        boolean lockElevator = elevatorController.getLeftBumperButton();
+
+
+        if (elevatorController.getYButton())      { moveL4(); }
+        else if (elevatorController.getBButton()) { moveL3(); } 
+        else if (elevatorController.getAButton()) { moveL2(); } 
+        else if (elevatorController.getXButton()) { grabSequence(); }
+
+        else if (lockElevator) {
             double flipperSpeed = (elevatorController.getLeftTriggerAxis() - elevatorController.getRightTriggerAxis()); 
             moveElevatorWithSafety(elevatorController.getRightY(), true);
             if (elevatorController.getPOV() != -1) {
@@ -317,27 +330,14 @@ public class Elevator {
                 moveFlipperManual(flipperSpeed);
             }
             moveArmManual(elevatorController.getLeftY());
-
-        }  else if (elevatorController.getYButton()) { 
-            moveL4();
-        }  else if (elevatorController.getBButton()) {
-            moveL3();
-        } else if (elevatorController.getAButton()) { 
-            moveL2();
-        } else if (elevatorController.getXButton()) { 
-            grabSequence();
         }
 
-        else {
+        else { // If no presets or Manual movement
             moveElevatorWithSafety(0, true);
             moveFlipperManual(0);
             moveArmManual(0);
-            L4Steps = 0;
-            L3Steps = 0;
-            L2Steps = 0;
-            grabSteps = 0;
+            L4Steps = 0; L3Steps = 0; L2Steps = 0; grabSteps = 0; // Resets preset steps
         }
-
         reportPose();
 
     }
