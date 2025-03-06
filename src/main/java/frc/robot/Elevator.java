@@ -1,9 +1,6 @@
 package frc.robot;
 
-import com.revrobotics.spark.SparkBase.ControlType;
-import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkMax;
-
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard; 
 
@@ -12,7 +9,6 @@ public class Elevator {
     private SparkMax flipperMotor = new SparkMax(27, SparkMax.MotorType.kBrushless);
     
     private SparkMax armMotor = new SparkMax(28, SparkMax.MotorType.kBrushless);
-    private SparkClosedLoopController armMotorController = armMotor.getClosedLoopController();
 
     XboxController elevatorController;
 
