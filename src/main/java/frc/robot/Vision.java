@@ -1,6 +1,7 @@
 package frc.robot;
 
 import org.photonvision.PhotonCamera;
+import org.photonvision.targeting.PhotonTrackedTarget;
 
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
@@ -56,6 +57,29 @@ public class Vision {
         }
 
         return isValid;
+    }
+
+    public double getClosestYaw() {
+        // Read in relevant data from the Camera
+        double targetYaw = 0.0;
+        var results = mainCamera.getAllUnreadResults();
+        double output = 5227;
+
+        if (!results.isEmpty()) {
+            // Camera processed a new frame since last
+            // Get the last one in the list.
+            var result = results.get(results.size() - 1);
+            if (result.hasTargets()) {
+                // At least one AprilTag was seen by the camera
+                for (var target : result.getTargets()) {
+                    if (testReefTag(target.getFiducialId())) { 
+                        targetYaw = target.getYaw();
+                        output = targetYaw;
+                    }
+                }
+            }
+        }
+        return output;
     }
 }
 

@@ -18,6 +18,7 @@ public class Teleop {
 		}
 	
 		public static void driveFunction(double slow) {
+			slow = 1;
 			Drivetrain Drivetrain = Constants.drivetrainClass;
 			double translateSpeedLimiter = 0.95;
 			double rotateSpeedLimiter = 0.95;
@@ -26,6 +27,13 @@ public class Teleop {
 				translateSpeedLimiter *= 0.25;
 				rotateSpeedLimiter *= 0.1;
 			} 
+
+			if (driverController.getLeftBumperButton()) {
+				Constants.ledClass.AlignSide = false;
+			}
+			if (driverController.getRightBumperButton()) {
+				Constants.ledClass.AlignSide = true;
+			}
 	
 			double xSpeed = (deadzones(driverController.getLeftY())* Constants.maxSwerveSpeed * translateSpeedLimiter * slow);
 			double ySpeed = (deadzones(driverController.getLeftX()) * Constants.maxSwerveSpeed * translateSpeedLimiter * slow);
@@ -41,13 +49,6 @@ public class Teleop {
 				if ((xSpeed > 0) || (ySpeed > 0) || (rotSpeed > 0)) {fieldRelative = true;}
 			}
 
-		// Y is left and right.... I guess....
-		ALIGNING = false;
-		if (driverController.getAButton()) { 
-			ySpeed = Constants.visionClass.alginToReef(); 
-			ALIGNING = true;
-		}
-
 		joystickAngle = Math.toDegrees(Math.atan2(driverController.getLeftX(), driverController.getLeftY()));
 		
 		Drivetrain.drive(
@@ -61,5 +62,6 @@ public class Teleop {
 	public void teleopPeriodic() {
 		Constants.elevatorClass.elevatorLogic();
 		driveFunction(Constants.elevatorClass.getElevatorSlowdown());
+		
 	}
 }

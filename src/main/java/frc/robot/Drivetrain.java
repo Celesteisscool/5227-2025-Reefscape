@@ -15,6 +15,7 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
+import edu.wpi.first.networktables.StructPublisher;
 
 /** Represents a swerve drive style drivetrain. */
 public class Drivetrain {
@@ -36,6 +37,8 @@ public class Drivetrain {
 
   StructArrayPublisher<SwerveModuleState> DesiredState = NetworkTableInstance.getDefault().getStructArrayTopic("Desired State", SwerveModuleState.struct).publish();
   StructArrayPublisher<SwerveModuleState> CurrentState = NetworkTableInstance.getDefault().getStructArrayTopic("Current State", SwerveModuleState.struct).publish();
+  StructPublisher<Pose2d> robotPose = NetworkTableInstance.getDefault().getStructTopic("MyPose", Pose2d.struct).publish();
+
 
   private final SwerveDriveKinematics kinematics =
       new SwerveDriveKinematics(
@@ -65,15 +68,15 @@ public class Drivetrain {
    *
    * @param xSpeed Speed of the robot in the x direction (forward).
    * @param ySpeed Speed of the robot in the y direction (sideways).
-   * @param rot Angular rate of the robot.
+   * @param rotSpeed Angular rate of the robot.
    * @param fieldRelative Whether the provided x and y speeds are relative to the field.
    */
   public void drive(
-      double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
+      double xSpeed, double ySpeed, double rotSpeed, boolean fieldRelative) {
     
     SwerveModuleState[] swerveModuleStates;
-    if (fieldRelative) { swerveModuleStates = kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rot, pigeon2.getRotation2d())); }
-    else { swerveModuleStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(xSpeed, ySpeed, rot)); }
+    if (fieldRelative) { swerveModuleStates = kinematics.toSwerveModuleStates(ChassisSpeeds.fromFieldRelativeSpeeds(xSpeed, ySpeed, rotSpeed, pigeon2.getRotation2d())); }
+    else { swerveModuleStates = kinematics.toSwerveModuleStates(new ChassisSpeeds(xSpeed, ySpeed, rotSpeed)); }
     SwerveDriveKinematics.desaturateWheelSpeeds(swerveModuleStates, maxSwerveSpeed);
     setStates(swerveModuleStates);
     updateDashboard();
@@ -109,6 +112,9 @@ public class Drivetrain {
       backRight.getState()
     };
     CurrentState.set(CurrentS);
+
+
+    robotPose.set(odometry.getPoseMeters());
   }
 
   /** Updates the field relative position of the robot. */

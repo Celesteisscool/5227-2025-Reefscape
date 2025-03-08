@@ -56,12 +56,15 @@ public class SwerveModule {
     rotationMotor = new SparkMax(rotationMotorChannel, MotorType.kBrushless);
     rotationEncoder = new CANcoder(rotationEncoderChannel);
     driveEncoder = driveMotor.getEncoder();
+
     
     // Limit the PID Controller's input range between -pi and pi and set the input to be continuous.
     rotationPIDController.enableContinuousInput(-Math.PI, Math.PI);
 
     // Reset the wheels, as we manually align them.
     rotationEncoder.setPosition(0);
+    // rotationEncoder.setPosition(rotationEncoder.getAbsolutePosition().getValueAsDouble());
+    
   }
 
   public double getDriveSpeedMetersPerSecond() {

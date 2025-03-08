@@ -26,7 +26,7 @@ public class Elevator {
     double flipperPoseMax = 0;
 
     double minArmPose = -30;
-    double maxArmPose = -0.25;
+    double maxArmPose = 0;
 
     public Elevator() { // Zeros Everything
         elevatorMotor.getEncoder().setPosition(0);
@@ -52,7 +52,7 @@ public class Elevator {
         } else if (elevatorPose < (elevatorMinHeight + slowZone) && slowZones) {
             speed *= 0.5; 
         }        
-        speed *= 4;
+        speed *= 9;
         elevatorMotor.setVoltage(speed);
     }
 
@@ -66,7 +66,7 @@ public class Elevator {
         if ((speed > 0) && (armPose > maxArmPose)) {
             speed = 0;
         }
-        armMotor.setVoltage(speed * 2);
+        armMotor.setVoltage(speed * 3);
     }
 
     public void moveFlipperPoses(int POV) {
@@ -110,9 +110,9 @@ public class Elevator {
     public void grabSequence() {
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
         var armPose = armMotor.getEncoder().getPosition();
-        double elevatorPresetSpeedUp = 0.55; // increase this a bit its really slow rn
+        double elevatorPresetSpeedUp = 0.75; // increase this a bit its really slow rn
         double elevatorPresetSpeedDown = 0.45; // increase this a bit its really slow rn
-        double armPresetSpeed = 0.45;
+        double armPresetSpeed = 0.75;
 
         switch (grabSteps) {
             case 0:
@@ -148,12 +148,12 @@ public class Elevator {
     public void moveL4() {
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
         var armPose = armMotor.getEncoder().getPosition();
-        double elevatorPresetSpeed = 0.75; // bump this once we know it works
-        double armPresetSpeed = 0.45;
+        double elevatorPresetSpeed = 1; // bump this once we know it works
+        double armPresetSpeed = 0.9;
 
         double L4ElevatorPose = elevatorMaxHeight - 2;
-        double L4MoveArm = L4ElevatorPose / 2;
-        double L4ArmPose = minArmPose + 10;
+        double L4MoveArm = L4ElevatorPose / 3;
+        double L4ArmPose = minArmPose + 5;
 
         boolean L4armDone = (armPose < L4ArmPose);
         boolean L4elevatorDone = (elevatorPose > L4ElevatorPose);
@@ -203,12 +203,12 @@ public class Elevator {
     public void moveL3() {
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
         var armPose = armMotor.getEncoder().getPosition();
-        double elevatorPresetSpeed = 0.75; // bump this once we know it works
-        double armPresetSpeed = 0.45;
+        double elevatorPresetSpeed = 0.95; // bump this once we know it works
+        double armPresetSpeed = 0.85;
 
         double L3ElevatorPose = 85;
         double L3MoveArm = L3ElevatorPose / 2;
-        double L3ArmPose = -22.5;
+        double L3ArmPose = -28;
 
         boolean L3armDone = (armPose < L3ArmPose);
         boolean L3elevatorDone = (elevatorPose > L3ElevatorPose);
@@ -259,10 +259,10 @@ public class Elevator {
         var elevatorPose = elevatorMotor.getEncoder().getPosition();
         var armPose = armMotor.getEncoder().getPosition();
         double elevatorPresetSpeed = 0.6; // bump this once we know it works
-        double armPresetSpeed = 0.65;
+        double armPresetSpeed = 0.85;
 
         double L2ElevatorPose = slowZone + 15;
-        double L2ArmPose = -22.5;
+        double L2ArmPose = -28;
 
         boolean L2armDone = (armPose < L2ArmPose);
         boolean L2elevatorUp = (elevatorPose > L2ElevatorPose);

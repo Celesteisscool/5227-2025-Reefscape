@@ -16,7 +16,7 @@ public class Auto {
     private PIDController yController   = Constants.yController;
     private PIDController rotController = Constants.rotController;
     private Drivetrain drivetrain = Constants.drivetrainClass;
-    private final Optional<Trajectory<SwerveSample>> trajectory = Choreo.loadTrajectory("myTrajectory");
+    private final Optional<Trajectory<SwerveSample>> trajectory = Choreo.loadTrajectory("testAuto");
     
     private final Timer timer = new Timer();
     public Auto() {
@@ -65,6 +65,34 @@ public class Auto {
                 followTrajectory(sample);
             }
         }
+    }
+
+    public void tempAutoCodeInit() {
+        timer.reset();
+        timer.start();
+    }
+
+    public void tempAutoCodePeriodic() {
+        double xSpeed;
+        double ySpeed;
+        double rotSpeed;
+        if (timer.get() < 1.75) {
+            xSpeed = (0.25 * Constants.maxSwerveSpeed * 0.95 * 1);
+		    ySpeed = ((0) * Constants.maxSwerveSpeed * 0.95 * 1);
+		    rotSpeed = ((0) * Constants.maxSwerveAngularSpeed * 0.95 * 1);
+            
+        } else {
+            xSpeed = (0 * Constants.maxSwerveSpeed * 0.95 * 1);
+		    ySpeed = ((0) * Constants.maxSwerveSpeed * 0.95 * 1);
+		    rotSpeed = ((0) * Constants.maxSwerveAngularSpeed * 0.95 * 1);
+        }
+
+        drivetrain.drive(
+			xSpeed, 
+			ySpeed, 
+			rotSpeed, 
+			true
+		);
     }
 
 }

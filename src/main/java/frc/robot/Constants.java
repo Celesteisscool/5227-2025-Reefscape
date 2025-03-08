@@ -16,8 +16,8 @@ public class Constants {
     public static final int[] backRightIDs = {1, 2, 9};
     public static final int gyroID = 32;
 
-    public static final SlewRateLimiter slewRateLimiterX = new SlewRateLimiter(2.5);
-    public static final SlewRateLimiter slewRateLimiterY = new SlewRateLimiter(2.5);
+    public static final SlewRateLimiter slewRateLimiterX = new SlewRateLimiter(3.5);
+    public static final SlewRateLimiter slewRateLimiterY = new SlewRateLimiter(3.5);
     public static final SlewRateLimiter slewRateLimiterRot = new SlewRateLimiter(3);
 
     // SwerveModule Constants
@@ -30,6 +30,8 @@ public class Constants {
     public static Drivetrain drivetrainClass = new Drivetrain();
     public static Elevator elevatorClass = new Elevator();
     public static final Vision visionClass = new Vision();
+    public static final LED ledClass = new LED();
+
 
     public static XboxController driverController   = new XboxController(0);
     public static XboxController elevatorController = new XboxController(1);
