@@ -11,7 +11,7 @@ public class LED {
     public AddressableLEDBuffer data = new AddressableLEDBuffer(24);
     private final LEDPattern rainbow = LEDPattern.rainbow(255, 128);
     private static final Distance LedSpacing = Meters.of(1 / 120.0);
-    public boolean AlignSide = false; // true is left false is right
+    public double AlignSide = 0; // true is left false is right
     public double leftAlign = -2.25;
 
 

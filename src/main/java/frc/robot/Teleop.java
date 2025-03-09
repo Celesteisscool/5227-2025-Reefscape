@@ -3,7 +3,7 @@ package frc.robot;
 import edu.wpi.first.wpilibj.XboxController;
 
 public class Teleop {
-	public static boolean ALIGNING = false;
+	private static int aligningSide = 0;
 	public static double joystickAngle = 0.0;
 	static boolean fieldRelative = true;
 	
@@ -28,12 +28,10 @@ public class Teleop {
 				rotateSpeedLimiter *= 0.1;
 			} 
 
-			if (driverController.getLeftBumperButton()) {
-				Constants.ledClass.AlignSide = false;
-			}
-			if (driverController.getRightBumperButton()) {
-				Constants.ledClass.AlignSide = true;
-			}
+			if (driverController.getLeftBumperButton()) { aligningSide = -1;} 
+			else if (driverController.getRightBumperButton()) { aligningSide = 1;} 
+			else { aligningSide = 0; }
+			Constants.ledClass.AlignSide = aligningSide;
 	
 			double xSpeed = (deadzones(driverController.getLeftY())* Constants.maxSwerveSpeed * translateSpeedLimiter * slow);
 			double ySpeed = (deadzones(driverController.getLeftX()) * Constants.maxSwerveSpeed * translateSpeedLimiter * slow);
@@ -49,12 +47,32 @@ public class Teleop {
 				if ((xSpeed > 0) || (ySpeed > 0) || (rotSpeed > 0)) {fieldRelative = true;}
 			}
 
+			if (aligningSide != 0) {
+				xSpeed = Constants.visionClass.alginToReef(aligningSide);
+			}
 		joystickAngle = Math.toDegrees(Math.atan2(driverController.getLeftX(), driverController.getLeftY()));
 		
+		double xOutput;
+		double yOutput;
+		double rotOutput;
+		if (driverController.getLeftTriggerAxis() > 0.5) { // FAST DRIVE :)
+			Constants.slewRateLimiterX.calculate(xSpeed); // Calculates to update even when pressed
+			Constants.slewRateLimiterY.calculate(ySpeed);
+			Constants.slewRateLimiterRot.calculate(rotSpeed);
+			xOutput = xSpeed;
+			yOutput = ySpeed;
+			rotOutput = rotSpeed;
+		} else {
+			xOutput = Constants.slewRateLimiterX.calculate(xSpeed);
+			yOutput = Constants.slewRateLimiterY.calculate(ySpeed);
+			rotOutput = Constants.slewRateLimiterRot.calculate(rotSpeed);
+		}
+
+
 		Drivetrain.drive(
-			Constants.slewRateLimiterX.calculate(xSpeed), 
-			Constants.slewRateLimiterY.calculate(ySpeed), 
-			Constants.slewRateLimiterRot.calculate(rotSpeed), 
+			xOutput,
+			yOutput,
+			rotOutput,
 			fieldRelative
 		);
 	};
@@ -62,6 +80,5 @@ public class Teleop {
 	public void teleopPeriodic() {
 		Constants.elevatorClass.elevatorLogic();
 		driveFunction(Constants.elevatorClass.getElevatorSlowdown());
-		
 	}
 }
