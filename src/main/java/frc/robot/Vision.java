@@ -2,19 +2,24 @@ package frc.robot;
 
 import org.photonvision.PhotonCamera;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Vision {
     public static final PhotonCamera leftCamera  = new PhotonCamera("leftCamera");
     public static final PhotonCamera rightCamera = new PhotonCamera("rightCamera");
-    private PIDController alignPIDController = new PIDController(0, 0, 0); // Tune these fr fr
+    private PIDController alignPIDController = new PIDController(0.25, 0, 0); // Tune these fr fr
+    
+    private SlewRateLimiter slewRateLimiter = new SlewRateLimiter(0.5);
+    private double allowedError = 1;
+
     /** Returns a joystick-like input for the robot to rotate to the nearest tag */
     public Double alginToReef(int side) {
         PhotonCamera camera = null;
         // Read in relevant data from the Camera
-        if (side == 1) {
+        if (side == -1) {
             camera = rightCamera;
-        } else if (side == -1) {
+        } else if (side == 1) {
             camera = leftCamera;
         }
 
@@ -25,7 +30,18 @@ public class Vision {
         if (targetYaw != null) {
             // Override the driver's move command with an automatic one that aligns with the tag.
             alignPIDController.setSetpoint(0);
-            output = alignPIDController.calculate(targetYaw);
+            
+            if (Math.abs(targetYaw) > allowedError) { 
+                output = alignPIDController.calculate(targetYaw*-1)*0.125;
+            }
+            else {
+                output = 0.0;
+            }
+            output = slewRateLimiter.calculate(output);
+
+        }
+        if (targetYaw == null) {
+            output = slewRateLimiter.calculate(0);
         }
         
         // Put debug information to the dashboard

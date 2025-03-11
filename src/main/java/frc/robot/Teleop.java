@@ -48,14 +48,16 @@ public class Teleop {
 			}
 
 			if (aligningSide != 0) {
-				xSpeed = Constants.visionClass.alginToReef(aligningSide);
+				Double alignOutput = Constants.visionClass.alginToReef(aligningSide);
+				if (alignOutput != null) { ySpeed = alignOutput; }
 			}
 		joystickAngle = Math.toDegrees(Math.atan2(driverController.getLeftX(), driverController.getLeftY()));
 		
 		double xOutput;
 		double yOutput;
 		double rotOutput;
-		if (driverController.getLeftTriggerAxis() > 0.5) { // FAST DRIVE :)
+		boolean noSmooth = (driverController.getLeftTriggerAxis() > 0.5 || aligningSide != 0);
+		if (noSmooth) { // FAST DRIVE :)
 			Constants.slewRateLimiterX.calculate(xSpeed); // Calculates to update even when pressed
 			Constants.slewRateLimiterY.calculate(ySpeed);
 			Constants.slewRateLimiterRot.calculate(rotSpeed);
