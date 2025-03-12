@@ -212,7 +212,7 @@ public class Elevator {
         double elevatorPresetSpeed = 0.95; // bump this once we know it works
         double armPresetSpeed = 0.85;
 
-        double L3ElevatorPose = 85;
+        double L3ElevatorPose = 55;
         double L3MoveArm = L3ElevatorPose / 2;
         double L3ArmPose = -28;
 
