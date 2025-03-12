@@ -21,56 +21,36 @@ public class LED {
         leds.start();
     }
 
-    public void setLeft(AddressableLEDBuffer buffer, double strength) {
-        for (int i = 0; i < buffer.getLength(); i = i+1) {
-            int output = (int) Math.floor(strength * 100);
-            buffer.setRGB(i,0,0,output);
+    public void setLEDOff() {
+        for (int i = 0; i < data.getLength(); i = i+1) {
+            data.setRGB(i,0,0,0);
         }
-    }
-    public void setRight(AddressableLEDBuffer buffer, double strength) {
-        int start = buffer.getLength() - 5;
-        for (int i = 0; i < buffer.getLength(); i = i+1) {
-            int output = (int) Math.floor(strength * 100);
-            buffer.setRGB(i,output,0,0);
-        }
+        leds.setData(data);
     }
 
-    public void setLEDOff(AddressableLEDBuffer buffer) {
-        for (int i = 0; i < buffer.getLength(); i = i+1) {
-            buffer.setRGB(i,0,0,0);
+    public void setLEDRED() {
+        for (int i = 0; i < data.getLength(); i = i+1) {
+            data.setRGB(i,100,0,0);
         }
+        leds.setData(data);  
     }
 
-    public void setLEDMove(double yaw, boolean sideLeft) {
-        if (sideLeft) {
-            if (yaw > leftAlign) {
-                double strength = yaw / 15;
-                strength = Math.min(1, strength);
-                setLeft(data, strength);
-            } else {
-                double strength = Math.abs(yaw) / 15;
-                strength = Math.min(1, strength);
-                setRight(data, strength);
-            }
+    public void setLEDGREEN() {
+        for (int i = 0; i < data.getLength(); i = i+1) {
+            data.setRGB(i,0,100,0);
         }
+        leds.setData(data);  
+    }
+
+    public void setLEDBLUE() {
+        for (int i = 0; i < data.getLength(); i = i+1) {
+            data.setRGB(i,0,0,100);
+        }
+        leds.setData(data);  
     }
 
 
-
-    public void setAllLED(int mode) {
-
-        // if (mode == 1) { // TELEOP
-            // double yaw = Constants.visionClass.getClosestYaw();
-            // if (yaw != 5227) {
-                // setLEDMove(yaw, AlignSide);
-            // }
-        // } 
-        // else if (mode == 0) { // DISABLED
-            // setLeft(data, 1);
-        // }
-        setLEDOff(data);
-        leds.setData(data);        
-    } 
+    
 
 
     

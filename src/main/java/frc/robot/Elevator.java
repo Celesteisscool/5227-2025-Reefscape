@@ -116,9 +116,11 @@ public class Elevator {
 
         switch (grabSteps) {
             case 0:
+                Constants.ledClass.setLEDBLUE();
                 if ((elevatorPose < 5) && (armPose < -5)) { grabSteps = 1; }
                 break;
             case 1:
+                Constants.ledClass.setLEDRED();
                 moveElevatorWithSafety(-elevatorPresetSpeedUp, false);
                 moveArmManual(0);
                 if (elevatorPose > (slowZone + 7.5)) { grabSteps = 2; }
@@ -136,6 +138,7 @@ public class Elevator {
             case 4:
                 moveElevatorWithSafety(0, false);
                 moveArmManual(0);
+                Constants.ledClass.setLEDGREEN();
                 break;
             default:
                 moveArmManual(0);
@@ -160,9 +163,11 @@ public class Elevator {
 
         switch (L4Steps) {
             case 0:
+                Constants.ledClass.setLEDBLUE();
                 if ((elevatorPose < 5) && (armPose > -1)) { L4Steps = 1; } // Checks if we're clamped on piece
                 break;
             case 1:
+                Constants.ledClass.setLEDRED();
                 moveElevatorWithSafety(-elevatorPresetSpeed, false); // Moves elevator upward 
                 moveArmManual(0);                                        // No slow because we're moving up
                 if (elevatorPose > L4MoveArm) { L4Steps = 2; } // Moves only halfway
@@ -191,6 +196,7 @@ public class Elevator {
             case 5: //Stops all
                 moveElevatorWithSafety(0, false);
                 moveArmManual(0);
+                Constants.ledClass.setLEDGREEN();
                 break; 
             default:
                 moveArmManual(0);
@@ -215,9 +221,11 @@ public class Elevator {
 
         switch (L3Steps) {
             case 0:
+                Constants.ledClass.setLEDBLUE();
                 if ((elevatorPose < 5) && (armPose > -1)) { L3Steps = 1; } // Checks if we're clamped on piece
                 break;
             case 1:
+                Constants.ledClass.setLEDRED();
                 moveElevatorWithSafety(-elevatorPresetSpeed, false); // Moves elevator upward 
                 moveArmManual(0);                                        // No slow because we're moving up
                 if (elevatorPose > L3MoveArm) { L3Steps = 2; } // Moves only halfway
@@ -246,6 +254,7 @@ public class Elevator {
             case 5: //Stops all
                 moveElevatorWithSafety(0, false);
                 moveArmManual(0);
+                Constants.ledClass.setLEDGREEN();
                 break; 
             default:
                 moveArmManual(0);
@@ -270,10 +279,12 @@ public class Elevator {
 
         switch (L2Steps) {
             case 0:
+                Constants.ledClass.setLEDBLUE();
                 if ((elevatorPose < 5) && (armPose > -1)) { L2Steps = 1; } // Checks if we're clamped on piece
                 break;
 
             case 1:
+                Constants.ledClass.setLEDRED();
                 moveElevatorWithSafety(-elevatorPresetSpeed, false); // Moves elevator upward 
                 moveArmManual(0);                                        // No slow because we're moving up
                 if (L2elevatorUp) { L2Steps = 2; } // If we can move arm yet
@@ -294,6 +305,7 @@ public class Elevator {
             case 4: //Stops all
                 moveElevatorWithSafety(0, false);
                 moveArmManual(0);
+                Constants.ledClass.setLEDGREEN();
                 break; 
             default:
                 moveArmManual(0);
@@ -318,6 +330,7 @@ public class Elevator {
         else if (elevatorController.getXButton()) { grabSequence(); }
 
         else if (lockElevator) {
+            Constants.ledClass.setLEDOff();
             double flipperSpeed = (elevatorController.getLeftTriggerAxis() - elevatorController.getRightTriggerAxis()); 
             moveElevatorWithSafety(elevatorController.getRightY(), true);
             if (elevatorController.getPOV() != -1) {
@@ -329,6 +342,7 @@ public class Elevator {
         }
 
         else { // If no presets or Manual movement
+            Constants.ledClass.setLEDOff();
             moveElevatorWithSafety(0, true);
             moveFlipperManual(0);
             moveArmManual(0);

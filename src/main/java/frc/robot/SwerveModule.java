@@ -19,8 +19,8 @@ import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 public class SwerveModule {
-  private static final double moduleMaxAngularVelocity = Constants.maxSwerveSpeed;
-  private static final double moduleMaxAngularAcceleration = 2 * Math.PI; // radians per second squared
+  private static final double moduleMaxAngularVelocity = Math.PI;
+  private static final double moduleMaxAngularAcceleration = 4 * Math.PI; // radians per second squared
   
   private final SparkMax driveMotor; 
   private final RelativeEncoder driveEncoder;

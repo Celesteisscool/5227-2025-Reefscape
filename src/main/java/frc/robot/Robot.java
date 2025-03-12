@@ -28,7 +28,6 @@ public class Robot extends TimedRobot {
 
   @Override 
   public void robotPeriodic() {
-    Constants.ledClass.setAllLED(LEDMODE);
   }
 
   @Override
