@@ -1,20 +1,19 @@
 package frc.robot;
 
 import org.photonvision.PhotonCamera;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class Vision {
     public static final PhotonCamera leftCamera  = new PhotonCamera("leftCamera");
     public static final PhotonCamera rightCamera = new PhotonCamera("rightCamera");
-    private PIDController alignPIDController = new PIDController(0.25, 0, 0); // Tune these fr fr
+    private Double lastYaw = null;
+
+    private static double leftCenter = 0.0;
     
-    private SlewRateLimiter slewRateLimiter = new SlewRateLimiter(0.5);
-    private double allowedError = 1;
+    private double allowedError = 2;
 
     /** Returns a joystick-like input for the robot to rotate to the nearest tag */
-    public Double alginToReef(int side) {
+    public void alginToReef(int side) {
         PhotonCamera camera = null;
         // Read in relevant data from the Camera
         if (side == -1) {
@@ -26,29 +25,36 @@ public class Vision {
         Double targetYaw = getClosestYaw(camera);
 
         // Auto-align when requested
-        Double output = null;
         if (targetYaw != null) {
-            // Override the driver's move command with an automatic one that aligns with the tag.
-            alignPIDController.setSetpoint(0);
-            
-            if (Math.abs(targetYaw) > allowedError) { 
-                output = alignPIDController.calculate(targetYaw*-1)*0.125;
-            }
-            else {
-                output = 0.0;
-            }
-            output = slewRateLimiter.calculate(output);
+            lastYaw = targetYaw;
+        }
 
+        if (side == 0) {
+            lastYaw = null;
         }
-        if (targetYaw == null) {
-            output = slewRateLimiter.calculate(0);
+
+        if (lastYaw != null) {
+            if (Math.abs(lastYaw - leftCenter) > allowedError) {
+                double useYaw = (lastYaw - leftCenter);
+                useYaw = (useYaw * 3);
+                double strengthDouble = Math.min(100,useYaw);
+                strengthDouble = Math.max(-100,useYaw);
+                int strength = (int) Math.floor(strengthDouble);
+
+                if (useYaw > 0) {
+                    Constants.ledClass.setLEDMoveLeft(strength);
+                } else if (useYaw < 0) {
+                    Constants.ledClass.setLEDMoveRight(-strength);
+                }
+            }   
         }
+
+
+        
         
         // Put debug information to the dashboard
         SmartDashboard.putBoolean("Vision Target Visible", (targetYaw != null));    
         
-        // Send output
-        return output;
     }
 
     /** tests if a tag is a reef tag */

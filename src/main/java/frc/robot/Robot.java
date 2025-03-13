@@ -9,7 +9,7 @@ import edu.wpi.first.wpilibj.TimedRobot;
 public class Robot extends TimedRobot {
   Auto auto = new Auto();
   Teleop teleop = new Teleop();
-  public int LEDMODE = 0;
+
   @Override
   public void autonomousInit() { auto.tempAutoCodeInit(); }
   
@@ -18,12 +18,12 @@ public class Robot extends TimedRobot {
 
   @Override
   public void disabledInit() {
-    LEDMODE = 0;
   }
 
   @Override 
   public void disabledPeriodic() { 
-    
+    Constants.ledClass.setLEDPurpleGold();
+    Constants.ledClass.update();
   }
 
   @Override 
@@ -35,8 +35,8 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
-    LEDMODE = 1;
   }
+
   @Override
   public void teleopPeriodic() {
     teleop.teleopPeriodic(); 
