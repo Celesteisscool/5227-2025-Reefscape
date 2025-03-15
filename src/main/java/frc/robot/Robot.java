@@ -11,7 +11,9 @@ public class Robot extends TimedRobot {
   Teleop teleop = new Teleop();
 
   @Override
-  public void robotInit() {}
+  public void robotInit() {
+    auto.setupDash();
+  }
   
   @Override 
   public void robotPeriodic() {}

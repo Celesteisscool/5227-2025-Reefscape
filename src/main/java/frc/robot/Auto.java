@@ -14,6 +14,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 
 public class Auto {
@@ -24,17 +25,19 @@ public class Auto {
     private final Optional<Trajectory<SwerveSample>> trajectory = Choreo.loadTrajectory("testAuto");
     public final SendableChooser<String> autoChooser = new SendableChooser<>();
     private final Timer timer = new Timer();
-    private String autoChooserString = "";
     public Auto() {
         rotController.enableContinuousInput(-Math.PI, Math.PI);
-        autoChooser.addOption("backup", "backup");
-        autoChooser.addOption("l4", "l4");
-        autoChooser.setDefaultOption("l4", "l4");
-        Shuffleboard.getTab("USE THIS").add("Auto Chooser", autoChooser);
     }
 
     private boolean isRedAlliance() {
         return DriverStation.getAlliance().orElse(Alliance.Blue).equals(Alliance.Red);
+    }
+
+    public void setupDash() {
+        autoChooser.addOption("backup", "backup");
+        autoChooser.addOption("l4", "l4");
+        autoChooser.setDefaultOption("l4", "l4");
+        SmartDashboard.putData(autoChooser);
     }
 
     public void autonomousInitChoreo() {
@@ -82,13 +85,12 @@ public class Auto {
     public void autoInit() {
         timer.reset();
         timer.start();
-        autoChooserString = autoChooser.getSelected();
     }
 
     public void runSelectedAuto() {
         if (autoChooser.getSelected() == "l4") {
             l4Auto();
-        } else if (autoChooser.getSelected() == "backup") {
+        } else {
             backupAuto();
         }
     }
