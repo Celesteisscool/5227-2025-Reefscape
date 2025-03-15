@@ -56,11 +56,11 @@ public class Drivetrain {
           });
 
   public Drivetrain() {
-    pigeon2.reset();  
+    pigeon2.setYaw(180);  
   }
 
   public Rotation2d getGyroRotation2d() {
-    return pigeon2.getRotation2d().plus(new Rotation2d(Math.PI));
+    return pigeon2.getRotation2d();
   }
 
   /**

@@ -56,7 +56,7 @@ public class Elevator {
         elevatorMotor.setVoltage(speed);
     }
 
-    private void moveArmManual(double speed) {
+    public void moveArmManual(double speed) {
         double armPose = (armMotor.getEncoder().getPosition());
         speed = Math.min(1, Math.max(speed, -1)); // Caps it just incase
         
@@ -154,9 +154,9 @@ public class Elevator {
         double elevatorPresetSpeed = 1; // bump this once we know it works
         double armPresetSpeed = 0.9;
 
-        double L4ElevatorPose = elevatorMaxHeight - 2;
+        double L4ElevatorPose = elevatorMaxHeight;
         double L4MoveArm = L4ElevatorPose / 3;
-        double L4ArmPose = minArmPose + 5;
+        double L4ArmPose = minArmPose;
 
         boolean L4armDone = (armPose < L4ArmPose);
         boolean L4elevatorDone = (elevatorPose > L4ElevatorPose);
@@ -315,6 +315,9 @@ public class Elevator {
     }
 
     public void elevatorLogic() {
+        var elevatorPose = elevatorMotor.getEncoder().getPosition();
+        var armPose = armMotor.getEncoder().getPosition();
+        boolean pickupReady = ((elevatorPose < 1.75) && (armPose < -5));
         elevatorController = Constants.elevatorController;
         // boolean lockElevator = (
         // (Math.abs(elevatorController.getLeftY())            > 0.1) || 
@@ -339,10 +342,16 @@ public class Elevator {
                 moveFlipperManual(flipperSpeed);
             }
             moveArmManual(elevatorController.getLeftY());
+            if (pickupReady) {
+                Constants.ledClass.setLEDPickup();
+            }
         }
 
         else { // If no presets or Manual movement
             Constants.ledClass.setLEDOff();
+            if (pickupReady) {
+                Constants.ledClass.setLEDPickup();
+            }
             moveElevatorWithSafety(0, true);
             moveFlipperManual(0);
             moveArmManual(0);

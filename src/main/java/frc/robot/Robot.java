@@ -11,10 +11,27 @@ public class Robot extends TimedRobot {
   Teleop teleop = new Teleop();
 
   @Override
-  public void autonomousInit() { auto.tempAutoCodeInit(); }
+  public void robotInit() {}
+  
+  @Override 
+  public void robotPeriodic() {}
+
+  @Override
+  public void autonomousInit() { auto.autoInit(); }
   
   @Override
-  public void robotInit() {}
+  public void autonomousPeriodic() { 
+    auto.runSelectedAuto(); 
+  }
+
+  @Override
+  public void teleopInit() {
+  }
+
+  @Override
+  public void teleopPeriodic() {
+    teleop.teleopPeriodic(); 
+  }
 
   @Override
   public void disabledInit() {
@@ -24,21 +41,5 @@ public class Robot extends TimedRobot {
   public void disabledPeriodic() { 
     Constants.ledClass.setLEDPurpleGold();
     Constants.ledClass.update();
-  }
-
-  @Override 
-  public void robotPeriodic() {
-  }
-
-  @Override
-  public void autonomousPeriodic() { auto.tempAutoCodePeriodic(); }
-
-  @Override
-  public void teleopInit() {
-  }
-
-  @Override
-  public void teleopPeriodic() {
-    teleop.teleopPeriodic(); 
   }
 }

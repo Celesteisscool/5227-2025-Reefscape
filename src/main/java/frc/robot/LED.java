@@ -33,6 +33,8 @@ public class LED {
     private final LEDPattern patternBlue = LEDPattern.solid(new Color(0,0,100));
     private final LEDPattern patternOff = LEDPattern.kOff;
     private final LEDPattern patternWhite = LEDPattern.solid(new Color(100,100,100));
+    private final LEDPattern patternPurple = LEDPattern.solid(Color.kViolet);
+
 
     private final AddressableLEDBufferView rightBack = new AddressableLEDBufferView(data, 0, 5);
     private final AddressableLEDBufferView leftBack = new AddressableLEDBufferView(data, 18, 23);
@@ -90,6 +92,10 @@ public class LED {
         patternWhite.atBrightness(strengthPer).applyTo(leftBack);
         // patternWhite.atBrightness(Percent.of(0)).applyTo(rightFront);
         // patternWhite.atBrightness(Percent.of(0)).applyTo(rightBack);
+    }
+
+    public void setLEDPickup() {
+        patternGreen.applyTo(data);
     }
 
     public void setLEDMoveOff() {
