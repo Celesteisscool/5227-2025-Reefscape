@@ -2,8 +2,6 @@ package frc.robot;
 
 import java.util.Optional;
 
-import javax.xml.xpath.XPath;
-
 import choreo.Choreo;
 import choreo.trajectory.SwerveSample;
 import choreo.trajectory.Trajectory;
@@ -12,7 +10,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
-import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
@@ -103,21 +100,23 @@ public class Auto {
             xSpeed = (0.1 * Constants.maxSwerveSpeed * 0.95 * 1);
 		    ySpeed = ((0) * Constants.maxSwerveSpeed * 0.95 * 1);
 		    rotSpeed = ((0) * Constants.maxSwerveAngularSpeed * 0.95 * 1);
-            Constants.elevatorClass.moveL4();
+            // Constants.elevatorClass.moveL4();
             
         } else if (timer.get() < 5) {
             xSpeed = (0 * Constants.maxSwerveSpeed * 0.95 * 1);
 		    ySpeed = ((0) * Constants.maxSwerveSpeed * 0.95 * 1);
 		    rotSpeed = ((0) * Constants.maxSwerveAngularSpeed * 0.95 * 1);
-            Constants.elevatorClass.moveL4();
+            // Constants.elevatorClass.moveL4();
         } else if (timer.get() < 6) {
-            Constants.elevatorClass.moveArmManual(0.5);
+            // Constants.elevatorClass.moveArmManual(0.5);
         }
 
         else {
             xSpeed = 0;
             ySpeed = 0;
             rotSpeed = 0;
+            // Constants.elevatorClass.moveArmManual(0);
+            // Constants.elevatorClass.moveElevatorWithSafety(0, false);
         }
 
         drivetrain.drive(
@@ -136,7 +135,7 @@ public class Auto {
             xSpeed = (0.25 * Constants.maxSwerveSpeed * 0.95 * 1);
 		    ySpeed = ((0) * Constants.maxSwerveSpeed * 0.95 * 1);
 		    rotSpeed = ((0) * Constants.maxSwerveAngularSpeed * 0.95 * 1);
-            Constants.elevatorClass.moveL4();
+            // Constants.elevatorClass.moveL4();
             
         } else {
             xSpeed = 0;
